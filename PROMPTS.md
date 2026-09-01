@@ -3,7 +3,6 @@
 ## Prompt 001 — Project Constitution
 
 ### Prompt
-
 Project context:
 - Full-stack calculator application.
 - Go backend exposing a stateless REST API.
@@ -32,3 +31,69 @@ Keep the constitution concise and avoid implementation-specific decisions
 such as API endpoints, data types, HTTP status codes, numerical limits,
 or folder structures. Those decisions should be made later during
 Specify, Clarify, and Plan.
+
+## Prompt 002 - Project Specification
+/speckit-specify
+
+Core functionality:
+
+The calculator must support:
+- Addition
+- Subtraction
+- Multiplication
+- Division
+- Exponentiation
+- Square root
+- Percentage
+
+API requirements:
+
+- The backend must expose calculator functionality through a REST API.
+- The API must accept calculation requests from clients.
+- Successful results must be returned in JSON format.
+- Errors must be returned in a consistent, machine-readable JSON format.
+- The API must validate incoming input before performing calculations.
+- The API must handle invalid operations and invalid input gracefully.
+- The API must be stateless.
+
+Validation and edge cases:
+
+Consider and define the expected behavior for relevant edge cases, including:
+- Division by zero.
+- Square root of negative numbers.
+- Missing or malformed input.
+- Unsupported operations.
+- Invalid numeric values.
+- Values that cannot be represented safely by the chosen numeric representation.
+- Arithmetic results that are not finite, such as infinity or NaN.
+
+Do not invent unnecessary validation rules or restrictions unless they are
+necessary for correctness, safety, or the requirements of the assignment.
+
+Testing requirements:
+
+Define acceptance criteria that ensure:
+- Each supported operation produces the correct result for valid inputs.
+- Invalid inputs are rejected appropriately.
+- Relevant arithmetic edge cases are handled correctly.
+- Important API success and error paths are testable.
+- Core calculator behavior can be tested independently from the HTTP layer.
+
+Requirements should be behavior-focused and independently verifiable.
+
+Do not make implementation-specific decisions about:
+- Go packages or folder structure.
+- Frameworks or libraries.
+- Numeric types.
+- Exact API endpoint paths.
+- Exact request or response schemas.
+- Exact HTTP status codes.
+- Internal architecture or implementation details.
+
+Those decisions should be addressed later during Clarify and Plan.
+
+## Prompt 003 - Project Clarification
+
+/speckit-clarify  Percentage is a binary operation: percentage(a, b) = (a / 100) * b
+For example, percentage(15, 200) = 30.
+All binary operations use exactly two numeric operands. Square root is the only unary operation.
