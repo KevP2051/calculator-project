@@ -97,3 +97,24 @@ Those decisions should be addressed later during Clarify and Plan.
 /speckit-clarify  Percentage is a binary operation: percentage(a, b) = (a / 100) * b
 For example, percentage(15, 200) = 30.
 All binary operations use exactly two numeric operands. Square root is the only unary operation.
+
+## Prompt 004 - Project Clarification 
+
+/speckit.clarify
+
+Numeric representation and validation decisions:
+
+- The backend MUST use IEEE 754 float64 for numeric calculations.
+- Valid input values may use the full representable finite float64 range.
+- The backend MUST accept decimal values.
+- Positive and negative finite values are valid inputs.
+- Zero is a valid input except where the operation specifically disallows it,
+  such as division by zero.
+- NaN and positive/negative infinity are invalid inputs.
+- The backend MUST NOT impose an arbitrary maximum number of digits or
+  decimal places beyond the limitations of float64 itself.
+- Arithmetic results that are NaN or positive/negative infinity MUST be
+  treated as errors rather than returned as successful results.
+- Floating-point representation noise must not be treated as an error.
+  Results should be returned without rounding; presentation/formatting is
+  the client's responsibility.
