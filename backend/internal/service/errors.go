@@ -41,10 +41,6 @@ type Error struct {
 	Message string
 }
 
-func (e *Error) Error() string {
-	return e.Message
-}
-
 var codeByCalcError = map[error]Code{
 	calc.ErrDivisionByZero: CodeDivisionByZero,
 	calc.ErrOutOfDomain:    CodeOperandOutOfDomain,

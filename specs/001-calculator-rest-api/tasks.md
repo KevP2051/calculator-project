@@ -234,14 +234,14 @@ values, and `sqrt(-9)` plus a negative base with a fractional exponent both retu
       rather than lowering the bar. Commit both files — the assignment asks for a coverage
       report as a deliverable, which is why T002 deliberately leaves them out of
       `.gitignore`.
-- [ ] T018 Verify constitutional compliance as a reviewable checklist, recording the result
+- [X] T018 Verify constitutional compliance as a reviewable checklist, recording the result
       in the task report: `backend/go.mod` has an empty `require` block (Constitution IV);
       `backend/internal/calc/` imports neither `net/http` nor `encoding/json`
       (Constitution II) — check with
       `grep -rE '"net/http"|"encoding/json"' backend/internal/calc/`; no interface with a
       single implementation and no configuration beyond `PORT` and `CORS_ORIGIN`
       (Constitution V).
-- [ ] T019 Run all 18 validation scenarios in
+- [X] T019 Run all 18 validation scenarios in
       `specs/001-calculator-rest-api/quickstart.md` against a live server started with
       `go run ./cmd/server` from `backend/`, and record the outcome of each. Any deviation is a defect to fix before this
       task is presented as complete, not a note to file.
