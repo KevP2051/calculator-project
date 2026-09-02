@@ -145,3 +145,82 @@ func TestSubtractionCannotUnderflowToZero(t *testing.T) {
 		})
 	}
 }
+
+func TestPowerIsRegisteredWithItsArityAndUnderflowSetting(t *testing.T) {
+	op, ok := Lookup("power")
+	if !ok {
+		t.Fatal("power is not registered")
+	}
+	if op.Arity != 2 {
+		t.Errorf("Arity = %d, want 2", op.Arity)
+	}
+	if !op.CheckUnderflow {
+		t.Error("CheckUnderflow = false, want true")
+	}
+}
+
+func TestPowerResults(t *testing.T) {
+	tests := []struct {
+		name     string
+		operands []float64
+		want     float64
+	}{
+		{"positive integer exponent", []float64{2, 10}, 1024},
+		{"exponent of zero", []float64{2, 0}, 1},
+		{"zero to the power of zero", []float64{0, 0}, 1},
+		{"zero base", []float64{0, 5}, 0},
+		{"negative base with an odd integer exponent", []float64{-2, 3}, -8},
+		{"negative base with an even integer exponent", []float64{-2, 4}, 16},
+		{"negative integer exponent", []float64{2, -3}, 0.125},
+		{"base of one", []float64{1, 1000}, 1},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := compute(t, "power", tt.operands...)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if got != tt.want {
+				t.Errorf("power(%v) = %v, want %v", tt.operands, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestPowerFailures(t *testing.T) {
+	tests := []struct {
+		name     string
+		operands []float64
+		want     error
+	}{
+		{"zero to a negative exponent", []float64{0, -1}, ErrOverflow},
+		{"result overflows", []float64{10, 400}, ErrOverflow},
+		{"result underflows", []float64{2, -100000}, ErrUnderflow},
+		{"negative base with a fractional exponent", []float64{-8, 1.0 / 3.0}, ErrOutOfDomain},
+		{"negative base with a half exponent", []float64{-4, 0.5}, ErrOutOfDomain},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := compute(t, "power", tt.operands...)
+			if !errors.Is(err, tt.want) {
+				t.Fatalf("error = %v, want %v", err, tt.want)
+			}
+			if got != 0 {
+				t.Errorf("result = %v, want 0 alongside an error", got)
+			}
+		})
+	}
+}
+
+func TestPowerReportsComplexResultsAsDomainErrorsNotUndefined(t *testing.T) {
+	_, err := compute(t, "power", -8, 1.0/3.0)
+
+	if errors.Is(err, ErrUndefined) {
+		t.Fatal("a negative base with a fractional exponent reported an undefined result, want a domain error")
+	}
+	if !errors.Is(err, ErrOutOfDomain) {
+		t.Errorf("error = %v, want %v", err, ErrOutOfDomain)
+	}
+}

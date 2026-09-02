@@ -203,7 +203,7 @@ as errors rather than as `NaN` or infinity.
 values, and `sqrt(-9)` plus a negative base with a fractional exponent both return
 `OPERAND_OUT_OF_DOMAIN`.
 
-- [ ] T015 [US3] Implement `power` in `backend/internal/calc/operations.go` and register it
+- [X] T015 [US3] Implement `power` in `backend/internal/calc/operations.go` and register it
       (`Arity` 2, `CheckUnderflow` true). Pre-check `base < 0 && exp != math.Trunc(exp)` and
       return `ErrOutOfDomain` *before* calling `math.Pow`, so the case reports as a domain
       error rather than `RESULT_UNDEFINED` (R7). Tests in
