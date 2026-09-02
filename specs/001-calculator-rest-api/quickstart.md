@@ -9,8 +9,7 @@ implementation guide — the code belongs to `tasks.md` and the Implement phase.
 
 ## Prerequisites
 
-- **Go 1.22 or later.** Required for `net/http`'s method+pattern routing (R1). Not
-  currently installed on this machine — install it before starting Implement.
+- **Go 1.22 or later.** Required for `net/http`'s method+pattern routing (R1).
 
 Verify:
 

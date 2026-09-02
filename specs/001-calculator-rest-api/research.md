@@ -25,9 +25,6 @@ zero justification burden.
 - Pre-1.22 `ServeMux` with manual method checks — works, but requires hand-rolling the 405
   path that the standard library now provides.
 
-**Environment note**: `go` is not currently on PATH on this machine. Go 1.22+ must be
-installed before Implement begins.
-
 ---
 
 ## R2. Endpoint shape: one endpoint or one per operation

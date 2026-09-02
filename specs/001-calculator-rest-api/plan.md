@@ -27,7 +27,6 @@ operands — reachable, provably, by only four of the seven operations (R5, FR-0
 
 **Language/Version**: Go 1.22 or later. The version floor is load-bearing: method+pattern
 routing in `net/http`'s `ServeMux` is what lets the service avoid a third-party router (R1).
-`go` is **not currently on PATH** on this machine and must be installed before Implement.
 
 **Primary Dependencies**: None. Standard library only — `net/http`, `encoding/json`,
 `strconv`, `math`, `errors`, `os`, `testing`, `net/http/httptest`. `backend/go.mod` is
@@ -198,7 +197,6 @@ surface beyond the two documented environment variables.
 
 | Risk | Mitigation |
 |---|---|
-| Go 1.22+ not installed — blocks Implement entirely | Install before the first task. Verified by `go version` in quickstart. |
 | The FR-024a underflow guard is unusual and easy to over-apply, breaking legitimate zeros | Scenario 15 in quickstart exists solely to catch this; `CheckUnderflow` is data on the registry entry, not a scattered condition; FR-031c adds subnormal-boundary tests that fail loudly if the guard is widened |
 | A future maintainer "fixes" the guard by extending it to addition and subtraction | FR-024d records the proof that they cannot underflow to zero, and states the widening prohibition inline rather than leaving the operation list looking arbitrary |
 | `0.1 + 0.2` silently rounded by a JSON encoder or a helpful `fmt` verb | FR-031b test plus quickstart scenario 4; encode with `encoding/json` defaults, never `strconv.FormatFloat` with a fixed precision |
