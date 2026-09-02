@@ -211,7 +211,7 @@ values, and `sqrt(-9)` plus a negative base with a fractional exponent both retu
       returning `ErrOverflow`; `(-8)^(1/3)` returning `ErrOutOfDomain`; `(-2)^3 == -8`
       (integer exponents on a negative base remain valid); `2^-100000` returning
       `ErrUnderflow`.
-- [ ] T016 [US3] Implement `sqrt` (`Arity` 1, `CheckUnderflow` false) and `percentage`
+- [X] T016 [US3] Implement `sqrt` (`Arity` 1, `CheckUnderflow` false) and `percentage`
       (`Arity` 2, `CheckUnderflow` true, computing `(a / 100) * b`) in
       `backend/internal/calc/operations.go` and register both. `sqrt` returns
       `ErrOutOfDomain` for a negative operand (FR-026). Tests in

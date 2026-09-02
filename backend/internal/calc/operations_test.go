@@ -2,6 +2,7 @@ package calc
 
 import (
 	"errors"
+	"fmt"
 	"math"
 	"testing"
 )
@@ -222,5 +223,151 @@ func TestPowerReportsComplexResultsAsDomainErrorsNotUndefined(t *testing.T) {
 	}
 	if !errors.Is(err, ErrOutOfDomain) {
 		t.Errorf("error = %v, want %v", err, ErrOutOfDomain)
+	}
+}
+
+func withinRelativeTolerance(got, want, tolerance float64) bool {
+	if got == want {
+		return true
+	}
+	return math.Abs(got-want)/math.Abs(want) <= tolerance
+}
+
+func TestExtendedOperationsAreRegisteredWithTheirArityAndUnderflowSetting(t *testing.T) {
+	tests := []struct {
+		name           string
+		arity          int
+		checkUnderflow bool
+	}{
+		{"sqrt", 1, false},
+		{"percentage", 2, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			op, ok := Lookup(tt.name)
+			if !ok {
+				t.Fatalf("operation %q is not registered", tt.name)
+			}
+			if op.Arity != tt.arity {
+				t.Errorf("Arity = %d, want %d", op.Arity, tt.arity)
+			}
+			if op.CheckUnderflow != tt.checkUnderflow {
+				t.Errorf("CheckUnderflow = %v, want %v", op.CheckUnderflow, tt.checkUnderflow)
+			}
+		})
+	}
+}
+
+func TestSquareRootResults(t *testing.T) {
+	tests := []struct {
+		name    string
+		operand float64
+		want    float64
+	}{
+		{"perfect square", 9, 3},
+		{"zero", 0, 0},
+		{"one", 1, 1},
+		{"fractional perfect square", 0.25, 0.5},
+		{"large perfect square", 1e100, 1e50},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := compute(t, "sqrt", tt.operand)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if got != tt.want {
+				t.Errorf("sqrt(%v) = %v, want %v", tt.operand, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestSquareRootOfANonPerfectSquareUsesTheToleranceTier(t *testing.T) {
+	got, err := compute(t, "sqrt", 2)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	const want = 1.4142135623730951
+	if !withinRelativeTolerance(got, want, 1e-9) {
+		t.Errorf("sqrt(2) = %v, want %v within a relative tolerance of 1e-9", got, want)
+	}
+}
+
+func TestSquareRootRejectsNegativeOperands(t *testing.T) {
+	for _, operand := range []float64{-9, -1, -1e-300, -math.MaxFloat64} {
+		t.Run(fmt.Sprint(operand), func(t *testing.T) {
+			got, err := compute(t, "sqrt", operand)
+			if !errors.Is(err, ErrOutOfDomain) {
+				t.Fatalf("error = %v, want %v", err, ErrOutOfDomain)
+			}
+			if got != 0 {
+				t.Errorf("result = %v, want 0 alongside an error", got)
+			}
+		})
+	}
+}
+
+func TestPercentageResults(t *testing.T) {
+	tests := []struct {
+		name     string
+		operands []float64
+		want     float64
+	}{
+		{"fifteen percent of two hundred", []float64{15, 200}, 30},
+		{"fifty percent of ten", []float64{50, 10}, 5},
+		{"one hundred percent", []float64{100, 42}, 42},
+		{"zero percent of five", []float64{0, 5}, 0},
+		{"five percent of zero", []float64{5, 0}, 0},
+		{"negative percentage", []float64{-10, 50}, -5},
+		{"fractional percentage", []float64{12.5, 80}, 10},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := compute(t, "percentage", tt.operands...)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if got != tt.want {
+				t.Errorf("percentage(%v) = %v, want %v", tt.operands, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestPercentageFailures(t *testing.T) {
+	tests := []struct {
+		name     string
+		operands []float64
+		want     error
+	}{
+		{"overflows", []float64{1e308, 1e308}, ErrOverflow},
+		{"underflows", []float64{1e-200, 1e-160}, ErrUnderflow},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := compute(t, "percentage", tt.operands...)
+			if !errors.Is(err, tt.want) {
+				t.Fatalf("error = %v, want %v", err, tt.want)
+			}
+			if got != 0 {
+				t.Errorf("result = %v, want 0 alongside an error", got)
+			}
+		})
+	}
+}
+
+func TestSquareRootCannotUnderflow(t *testing.T) {
+	got, err := compute(t, "sqrt", math.SmallestNonzeroFloat64)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got == 0 {
+		t.Error("sqrt of the smallest subnormal returned 0")
 	}
 }

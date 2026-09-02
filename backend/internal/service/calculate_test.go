@@ -231,3 +231,40 @@ func TestValidationHappensBeforeCalculation(t *testing.T) {
 		t.Errorf("code = %q, want %q: the invalid operand must be caught before the zero divisor", got, CodeInvalidOperand)
 	}
 }
+
+func TestCalculateRejectsWrongOperandCountForSquareRoot(t *testing.T) {
+	tests := []struct {
+		name string
+		req  Request
+	}{
+		{"two operands for sqrt", Request{Operation: "sqrt", Operands: numbers("9", "4")}},
+		{"no operands for sqrt", Request{Operation: "sqrt", Operands: []any{}}},
+		{"one operand for percentage", Request{Operation: "percentage", Operands: numbers("15")}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := expectFailure(t, tt.req).Code; got != CodeInvalidOperandCount {
+				t.Errorf("code = %q, want %q", got, CodeInvalidOperandCount)
+			}
+		})
+	}
+}
+
+func TestCalculateReportsDomainErrors(t *testing.T) {
+	tests := []struct {
+		name string
+		req  Request
+	}{
+		{"square root of a negative", Request{Operation: "sqrt", Operands: numbers("-9")}},
+		{"negative base with a fractional exponent", Request{Operation: "power", Operands: numbers("-8", "0.5")}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := expectFailure(t, tt.req).Code; got != CodeOperandOutOfDomain {
+				t.Errorf("code = %q, want %q", got, CodeOperandOutOfDomain)
+			}
+		})
+	}
+}
