@@ -54,7 +54,7 @@ These override the generic guidance in the template:
       directories `backend/cmd/server/`, `backend/internal/calc/`,
       `backend/internal/service/`, `backend/internal/api/`. Verify with
       `cd backend && go build ./...`.
-- [ ] T002 [P] Add Go build artifacts to `.gitignore` at the repository root: compiled
+- [X] T002 [P] Add Go build artifacts to `.gitignore` at the repository root: compiled
       binaries (`backend/server`, `backend/server.exe`). Do **not** ignore
       `backend/coverage.out` or `backend/coverage.html` — the assignment lists a coverage
       report among its deliverables, so T017 commits both.
@@ -70,7 +70,7 @@ depends on all of it.
 
 **CRITICAL**: No user story work begins until this phase is complete.
 
-- [ ] T003 Define the core failure sentinels in `backend/internal/calc/errors.go`:
+- [X] T003 Define the core failure sentinels in `backend/internal/calc/errors.go`:
       `ErrDivisionByZero`, `ErrOutOfDomain`, `ErrOverflow`, `ErrUnderflow`, `ErrUndefined`.
       Plain `errors.New` sentinels, comparable with `errors.Is`. This file must import
       nothing beyond `errors` (Constitution II).
