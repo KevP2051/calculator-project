@@ -118,3 +118,16 @@ Numeric representation and validation decisions:
 - Floating-point representation noise must not be treated as an error.
   Results should be returned without rounding; presentation/formatting is
   the client's responsibility.
+
+## Prompt 005 - Project Clarification 
+
+Please revisit the underflow decision in the plan.
+The current plan only checks for RESULT_UNDERFLOW in multiply, divide,
+power, and percentage.
+Underflow depends on the mathematical result, not the operation.
+Addition and subtraction can also underflow when a non-zero result is
+too small to be represented by float64.
+Please determine whether supporting underflow detection for add/subtract
+is worth the added complexity for this assignment's scope and
+constraints. If not, document the limitation and rationale explicitly.
+Do not implement code yet.

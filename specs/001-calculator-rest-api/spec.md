@@ -19,6 +19,8 @@
 - Q: Should a calculation that underflows to zero (for example `1e-200 * 1e-200`) return 0 as a success or be rejected? → A: Rejected as an underflow-result error, a category distinct from overflow. Applies only to multiplication, division, exponentiation and percentage, and only when every operand is non-zero — a zero produced by addition, subtraction, or a zero operand is a legitimate result.
 - Q: Should underflow carry its own error identifier or share the overflow identifier? → A: Its own. Overflow, underflow, and undefined (NaN) results are three distinct categories with three distinct identifiers, as FR-012 already requires; the client remedy differs for each.
 - Q: What tolerance should acceptance tests use when comparing a computed result to the expected value? → A: Two-tier. Exact equality where the expected value is exactly representable in binary64 (`2 + 3`, `0.1 + 0.2 == 0.30000000000000004`, `percentage(15, 200) == 30`); relative tolerance of `1e-9` only where the true value is irrational or transcendental (square root, non-integer exponentiation). The exact tier is what makes FR-017a's no-rounding guarantee testable.
+- Q: Underflow is a property of the result, not the operation — should addition and subtraction also be underflow-checked? → A: They need no check, and adding one would be a defect. Binary64 addition and subtraction cannot underflow to zero: every finite binary64 value is an integer multiple of 2^-1074, so a non-zero exact sum or difference has magnitude at least 2^-1074, which is exactly representable. A zero result from non-zero operands in addition or subtraction is therefore always exact cancellation, and flagging it would violate FR-024b. Recorded as a proven property (FR-024d), not as a limitation.
+- Q: Should the test suite prove that addition and subtraction cannot underflow, or is documenting it enough? → A: Prove it cheaply. Two subnormal-boundary rows added to the existing subtraction test table (FR-031c), so that widening the underflow guard fails the suite loudly instead of silently breaking FR-024b. No property-based testing.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -149,11 +151,17 @@ exponentiation producing a non-finite result) and confirm they are reported as e
 - **Loss of precision within the representable range** (very small differences between very
   large numbers): Accepted and returned. Precision loss inherent to binary64 is not an
   error. The one exception is underflow to zero, below.
-- **A calculation that underflows to zero** (for example `1e-200 * 1e-200`, or
-  `1e-300 / 1e300`): Rejected as an underflow-result error, a category distinct from
-  overflow (FR-024c). The condition is that the
-  operation is multiplication, division, exponentiation, or percentage, every operand is
-  non-zero, and the computed result is zero.
+- **A calculation that underflows to zero** (for example `1e-200 * 1e-200`,
+  `1e-300 / 1e300`, or `2` raised to `-100000`): Rejected as an underflow-result error, a
+  category distinct from overflow (FR-024c). The condition is that every operand is non-zero
+  and the computed result is zero, which per FR-024d only multiplication, division,
+  exponentiation, and percentage can satisfy.
+- **Addition or subtraction producing zero from non-zero operands** (for example `5 - 5`,
+  or two subnormal values whose difference rounds to zero): Always a success returning `0`,
+  never an underflow error. Binary64 addition and subtraction cannot underflow to zero
+  (FR-024d), so such a zero is necessarily exact cancellation. Note that two *decimal*
+  literals which appear to differ, such as `1e-320` and `9.99999e-321`, may denote the same
+  binary64 value; their difference is then exactly zero, not an underflow.
 - **A zero result that is mathematically correct**: Accepted and returned. This covers exact
   cancellation in addition and subtraction (`5 - 5`, `5 + -5`), any operation with a zero
   operand (`0 * 5`, `0 / 5`, `percentage(0, 5)`, `percentage(5, 0)`, `0 ** 5`), and the
@@ -261,17 +269,32 @@ including binary64 representation noise, is governed by FR-017a.
   the requested operation.
 - **FR-024**: System MUST reject a calculation whose result is not finite, distinguishing an
   out-of-range (overflow) result from an undefined (NaN) result.
-- **FR-024a**: System MUST reject, as an underflow-result error, a calculation that
-  underflows to zero: a multiplication, division, exponentiation, or percentage whose
-  operands are all non-zero but whose result is zero. The true result of such a calculation
-  is a non-zero value too small to represent in binary64, and returning zero would report a
-  magnitude the service did not compute.
+- **FR-024a**: System MUST reject, as an underflow-result error, any calculation whose
+  result is zero while every operand is non-zero **and** whose exact mathematical result is
+  non-zero. The true result of such a calculation is a value too small to represent in
+  binary64, and returning zero would report a magnitude the service did not compute. This
+  rule is stated in terms of the result, not the operation; FR-024d derives which operations
+  can satisfy it.
 - **FR-024b**: A zero result MUST be returned as a success whenever it is mathematically
   correct rather than the product of underflow — specifically, any zero produced by addition
   or subtraction (including exact cancellation such as `5 - 5`), and any zero produced by an
   operation for which at least one operand is zero (such as `0 * 5`, `0 / 5`, or
-  `percentage(0, 5)`). Square root cannot underflow: its result is zero only when its
-  operand is zero.
+  `percentage(0, 5)`).
+- **FR-024d**: The underflow condition in FR-024a is reachable only by multiplication,
+  division, exponentiation, and percentage. This is a derived property of binary64, not a
+  scoping choice, and it MUST NOT be widened:
+  - Every finite binary64 value is an integer multiple of `2^-1074`, the smallest positive
+    subnormal. The exact sum or difference of two such values is therefore also an integer
+    multiple of `2^-1074`, so if it is non-zero its magnitude is at least `2^-1074` — a value
+    that is exactly representable. Rounding cannot carry it to zero, since that would require
+    a magnitude below `2^-1075`. **Addition and subtraction therefore cannot underflow to
+    zero.** A zero result from non-zero operands is always exact cancellation, and rejecting
+    it would violate FR-024b.
+  - Square root cannot underflow: `sqrt(x)` is zero only when `x` is zero, since the square
+    root of the smallest positive subnormal is approximately `2.2e-162`.
+  - For multiplication, division, exponentiation, and percentage, the exact result of
+    non-zero operands is never zero, so a computed zero can only be underflow. The test in
+    FR-024a is therefore sound for exactly these four operations and unsound elsewhere.
 - **FR-024c**: Overflow (a non-finite result), underflow (FR-024a), and an undefined result
   (NaN) are three distinct failure categories and MUST carry three distinct stable error
   identifiers, per FR-012. A client MUST be able to tell "the result was too large" from
@@ -296,6 +319,12 @@ including binary64 representation noise, is governed by FR-017a.
   mathematically expected value is exactly representable in binary64, and MUST use a
   relative tolerance of `1e-9` only where the true value is irrational or transcendental
   (square root of a non-perfect square, non-integer exponentiation).
+- **FR-031c**: The test suite MUST include at least two subnormal-boundary cases for
+  subtraction that assert a successful result: one where the operands are equal at the
+  smallest positive subnormal and the result is `0`, and one where the operands are adjacent
+  subnormals and the result is a non-zero subnormal. These exist to fail loudly if the
+  FR-024a underflow guard is ever widened to addition or subtraction in violation of
+  FR-024d.
 - **FR-031b**: At least one test MUST assert exact equality on a result carrying
   representation noise — for example that adding `0.1` and `0.2` returns
   `0.30000000000000004` and not `0.3` — since a tolerance-based comparison cannot detect a
@@ -336,6 +365,9 @@ including binary64 representation noise, is governed by FR-017a.
   starting the HTTP layer.
 - **SC-007a**: At least one automated test proves results are returned unrounded, by
   asserting exact equality on a result that carries binary64 representation noise.
+- **SC-007b**: Subtraction at the subnormal boundary returns a successful result in every
+  tested case, confirming that the underflow guard has not been widened past the operations
+  FR-024d permits.
 - **SC-008**: Repeating any request from the acceptance scenarios produces an identical
   response, confirming statelessness.
 - **SC-009**: A client developer can integrate against the API using only the documented

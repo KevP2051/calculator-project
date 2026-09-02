@@ -39,6 +39,13 @@
   FR-022, FR-022a); underflow to zero made an error distinct from overflow, with
   mathematically correct zeros protected (FR-024a – FR-024c); acceptance tolerance fixed to
   a two-tier rule (FR-031a, FR-031b, SC-001, SC-007a).
+- **Resolved 2026-09-01 (clarify session 3)**: the underflow scoping was challenged as
+  operation-based rather than result-based. FR-024a restated in terms of the result; FR-024d
+  added, deriving the reachable operation set from a property of binary64 (every finite value
+  is an integer multiple of `2^-1074`, so addition and subtraction cannot underflow to zero)
+  and prohibiting the guard from being widened; FR-031c and SC-007b add subnormal-boundary
+  regression tests. No behavior change — the observable contract is identical, the rationale
+  is now derived rather than asserted.
 - **Justification for naming IEEE 754 binary64 in the spec** (relevant to the "No
   implementation details" item, which remains passing): binary64 is a language-neutral
   published standard, not a language, framework, or library choice. It is directly
