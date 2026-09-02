@@ -133,10 +133,16 @@ constraints. If not, document the limitation and rationale explicitly.
 Do not implement code yet.
 
 
-## Propmpt 006 - Project Tasks Correction
+## Prompt 006 - Project Tasks Correction
 
 There is an inconsistency in the tasks:
 T002 adds backend/coverage.out and backend/coverage.html to .gitignore,
 but T017 says to commit both files as deliverables.
 Please resolve this inconsistency based on the assignment requirements.
 Do not change anything else.
+
+
+## Prompt 007 - Project Tasks Correction
+/speckit-implement
+Review the constitution and tasks.md before implementing.
+

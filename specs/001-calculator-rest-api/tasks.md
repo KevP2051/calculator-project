@@ -49,7 +49,7 @@ These override the generic guidance in the template:
 
 **Purpose**: An empty but valid Go module with the directory skeleton from plan.md.
 
-- [ ] T001 Initialize the Go module and package skeleton: create `backend/go.mod`
+- [X] T001 Initialize the Go module and package skeleton: create `backend/go.mod`
       (`module calculator/backend`, `go 1.22`, empty `require` block) and the empty
       directories `backend/cmd/server/`, `backend/internal/calc/`,
       `backend/internal/service/`, `backend/internal/api/`. Verify with
