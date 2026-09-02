@@ -146,7 +146,7 @@ branches exhaustively and is where they are verified.
       apply the T007 guards. Tests in `backend/internal/service/calculate_test.go` covering
       the happy path for all four operations and confirming no HTTP import is needed to run
       them (FR-028).
-- [ ] T011 [US1] Implement the calculate handler in `backend/internal/api/handler.go`:
+- [X] T011 [US1] Implement the calculate handler in `backend/internal/api/handler.go`:
       decode the body with `json.Decoder` and `UseNumber()`, delegate to the T010 service,
       and encode `{"result": <number>}` on success using `encoding/json` defaults — never
       `strconv.FormatFloat` with a fixed precision, which would violate FR-017a. Register

@@ -8,6 +8,7 @@ import (
 func NewRouter(corsOrigin string) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", handleHealth)
+	mux.HandleFunc("POST /api/v1/calculate", handleCalculate)
 
 	return withCORS(mux, corsOrigin)
 }
