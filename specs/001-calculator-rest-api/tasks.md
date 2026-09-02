@@ -167,7 +167,7 @@ status, and never a numeric result.
 **Independent Test**: Run quickstart scenarios 5 through 14. Each returns its own code, all
 share one envelope shape, and no error body contains a `result` field.
 
-- [ ] T012 [US2] Complete and verify the validation error branches in
+- [X] T012 [US2] Complete and verify the validation error branches in
       `backend/internal/service/calculate.go`, adding a test case per code in
       `backend/internal/service/calculate_test.go`: `MISSING_FIELD` (absent `operation`,
       absent `operands`), `UNSUPPORTED_OPERATION` (an unknown name, asserting no fallback to

@@ -2,6 +2,7 @@ package service
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 )
 
@@ -94,5 +95,150 @@ func TestCalculateDoesNotRoundResults(t *testing.T) {
 
 	if got == 0.3 {
 		t.Fatal("0.1 + 0.2 returned 0.3, so the result was rounded")
+	}
+}
+
+func expectFailure(t *testing.T, req Request) *Error {
+	t.Helper()
+
+	result, err := Calculate(req)
+	if err == nil {
+		t.Fatalf("expected a failure, got result %v", result)
+	}
+	if result != 0 {
+		t.Errorf("result = %v, want 0 alongside a failure", result)
+	}
+	if err.Message == "" {
+		t.Error("failure carries no message")
+	}
+
+	return err
+}
+
+func TestCalculateReportsMissingFields(t *testing.T) {
+	tests := []struct {
+		name string
+		req  Request
+	}{
+		{"operation absent", Request{Operands: numbers("2", "3")}},
+		{"operation empty", Request{Operation: "", Operands: numbers("2", "3")}},
+		{"operands absent", Request{Operation: "add"}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := expectFailure(t, tt.req).Code; got != CodeMissingField {
+				t.Errorf("code = %q, want %q", got, CodeMissingField)
+			}
+		})
+	}
+}
+
+func TestCalculateRejectsUnsupportedOperations(t *testing.T) {
+	for _, operation := range []string{"tangent", "ADD", "sum", "plus", " add"} {
+		t.Run(operation, func(t *testing.T) {
+			if got := expectFailure(t, Request{Operation: operation, Operands: numbers("2", "3")}).Code; got != CodeUnsupportedOperation {
+				t.Errorf("code = %q, want %q", got, CodeUnsupportedOperation)
+			}
+		})
+	}
+}
+
+func TestCalculateRejectsWrongOperandCount(t *testing.T) {
+	tests := []struct {
+		name string
+		req  Request
+	}{
+		{"one operand for add", Request{Operation: "add", Operands: numbers("2")}},
+		{"three operands for add", Request{Operation: "add", Operands: numbers("2", "3", "4")}},
+		{"three operands for divide", Request{Operation: "divide", Operands: numbers("2", "3", "4")}},
+		{"empty operand list", Request{Operation: "add", Operands: []any{}}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := expectFailure(t, tt.req).Code; got != CodeInvalidOperandCount {
+				t.Errorf("code = %q, want %q", got, CodeInvalidOperandCount)
+			}
+		})
+	}
+}
+
+func TestCalculateRejectsOperandsThatAreNotNumbers(t *testing.T) {
+	tests := []struct {
+		name    string
+		operand any
+	}{
+		{"text", "abc"},
+		{"numeric text", "5"},
+		{"the word NaN", "NaN"},
+		{"the word Infinity", "Infinity"},
+		{"the word -Infinity", "-Infinity"},
+		{"boolean", true},
+		{"null", nil},
+		{"object", map[string]any{"value": json.Number("5")}},
+		{"array", []any{json.Number("5")}},
+		{"malformed number token", json.Number("abc")},
+		{"empty number token", json.Number("")},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := Request{Operation: "add", Operands: []any{tt.operand, json.Number("1")}}
+			if got := expectFailure(t, req).Code; got != CodeInvalidOperand {
+				t.Errorf("code = %q, want %q", got, CodeInvalidOperand)
+			}
+		})
+	}
+}
+
+func TestCalculateReportsTheOffendingOperandPosition(t *testing.T) {
+	req := Request{Operation: "add", Operands: []any{json.Number("1"), "abc"}}
+
+	if message := expectFailure(t, req).Message; !strings.Contains(message, "1") {
+		t.Errorf("message = %q, does not identify operand 1", message)
+	}
+}
+
+func TestNotANumberAndOutOfRangeAreDistinctCodes(t *testing.T) {
+	notANumber := expectFailure(t, Request{Operation: "add", Operands: []any{"abc", json.Number("1")}})
+	outOfRange := expectFailure(t, Request{Operation: "add", Operands: numbers("1e400", "1")})
+
+	if notANumber.Code == outOfRange.Code {
+		t.Fatalf("both failures used code %q", notANumber.Code)
+	}
+	if notANumber.Code != CodeInvalidOperand {
+		t.Errorf("non-numeric operand code = %q, want %q", notANumber.Code, CodeInvalidOperand)
+	}
+	if outOfRange.Code != CodeOperandOutOfRange {
+		t.Errorf("out-of-range operand code = %q, want %q", outOfRange.Code, CodeOperandOutOfRange)
+	}
+}
+
+func TestCalculateReportsCalculationFailures(t *testing.T) {
+	tests := []struct {
+		name string
+		req  Request
+		want Code
+	}{
+		{"division by zero", Request{Operation: "divide", Operands: numbers("1", "0")}, CodeDivisionByZero},
+		{"overflow", Request{Operation: "multiply", Operands: numbers("1e308", "10")}, CodeResultOverflow},
+		{"underflow", Request{Operation: "multiply", Operands: numbers("1e-200", "1e-200")}, CodeResultUnderflow},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := expectFailure(t, tt.req).Code; got != tt.want {
+				t.Errorf("code = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestValidationHappensBeforeCalculation(t *testing.T) {
+	req := Request{Operation: "divide", Operands: []any{"abc", json.Number("0")}}
+
+	if got := expectFailure(t, req).Code; got != CodeInvalidOperand {
+		t.Errorf("code = %q, want %q: the invalid operand must be caught before the zero divisor", got, CodeInvalidOperand)
 	}
 }
