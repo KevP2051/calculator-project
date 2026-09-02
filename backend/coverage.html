@@ -69,7 +69,7 @@
 				
 				<option value="file6">calculator/backend/internal/service/calculate.go (93.5%)</option>
 				
-				<option value="file7">calculator/backend/internal/service/errors.go (80.0%)</option>
+				<option value="file7">calculator/backend/internal/service/errors.go (100.0%)</option>
 				
 				</select>
 			</div>
@@ -476,10 +476,6 @@ type Error struct {
         Code    Code
         Message string
 }
-
-func (e *Error) Error() string {
-        <span class="cov0" title="0">return e.Message
-</span>}
 
 var codeByCalcError = map[error]Code{
         calc.ErrDivisionByZero: CodeDivisionByZero,

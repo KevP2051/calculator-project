@@ -245,7 +245,7 @@ values, and `sqrt(-9)` plus a negative base with a fractional exponent both retu
       `specs/001-calculator-rest-api/quickstart.md` against a live server started with
       `go run ./cmd/server` from `backend/`, and record the outcome of each. Any deviation is a defect to fix before this
       task is presented as complete, not a note to file.
-- [ ] T020 [P] Write `backend/README.md`: setup and prerequisites, how to run the server and
+- [X] T020 [P] Write `backend/README.md`: setup and prerequisites, how to run the server and
       the tests, `curl` examples for every operation **and** for each error category, the
       environment variables, and a Design Decisions section drawn from
       [research.md](research.md) — the single-endpoint choice (R2), the operand array (R3),
