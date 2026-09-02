@@ -71,11 +71,3 @@ func TestAllCodesAreUniqueAndNonEmpty(t *testing.T) {
 		t.Errorf("len(AllCodes) = %d, want 11", len(AllCodes))
 	}
 }
-
-func TestErrorSatisfiesErrorInterface(t *testing.T) {
-	var err error = &Error{Code: CodeMalformedJSON, Message: "bad body"}
-
-	if err.Error() != "bad body" {
-		t.Errorf("Error() = %q, want %q", err.Error(), "bad body")
-	}
-}

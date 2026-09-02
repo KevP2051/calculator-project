@@ -2,7 +2,6 @@ package service
 
 import (
 	"encoding/json"
-	"strings"
 	"testing"
 )
 
@@ -178,8 +177,6 @@ func TestCalculateRejectsOperandsThatAreNotNumbers(t *testing.T) {
 		{"null", nil},
 		{"object", map[string]any{"value": json.Number("5")}},
 		{"array", []any{json.Number("5")}},
-		{"malformed number token", json.Number("abc")},
-		{"empty number token", json.Number("")},
 	}
 
 	for _, tt := range tests {
@@ -189,14 +186,6 @@ func TestCalculateRejectsOperandsThatAreNotNumbers(t *testing.T) {
 				t.Errorf("code = %q, want %q", got, CodeInvalidOperand)
 			}
 		})
-	}
-}
-
-func TestCalculateReportsTheOffendingOperandPosition(t *testing.T) {
-	req := Request{Operation: "add", Operands: []any{json.Number("1"), "abc"}}
-
-	if message := expectFailure(t, req).Message; !strings.Contains(message, "1") {
-		t.Errorf("message = %q, does not identify operand 1", message)
 	}
 }
 

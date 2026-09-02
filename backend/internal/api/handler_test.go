@@ -127,3 +127,122 @@ func TestCalculationFailureIsReported(t *testing.T) {
 		t.Errorf("error response carries a result: %s", recorder.Body.String())
 	}
 }
+
+func envelopeShape(t *testing.T, raw []byte) map[string]any {
+	t.Helper()
+
+	var body map[string]any
+	if err := json.Unmarshal(raw, &body); err != nil {
+		t.Fatalf("response is not JSON: %v", err)
+	}
+
+	if _, hasResult := body["result"]; hasResult {
+		t.Errorf("error response carries a result: %s", raw)
+	}
+	if len(body) != 1 {
+		t.Errorf("error response has %d top-level keys, want 1: %s", len(body), raw)
+	}
+
+	detail, ok := body["error"].(map[string]any)
+	if !ok {
+		t.Fatalf("error response has no error object: %s", raw)
+	}
+	if len(detail) != 2 {
+		t.Errorf("error object has %d keys, want 2: %s", len(detail), raw)
+	}
+	if _, ok := detail["code"].(string); !ok {
+		t.Errorf("error object has no string code: %s", raw)
+	}
+	if message, ok := detail["message"].(string); !ok || message == "" {
+		t.Errorf("error object has no non-empty message: %s", raw)
+	}
+
+	return detail
+}
+
+func TestErrorResponsesUseOneEnvelopeAndTheRightStatus(t *testing.T) {
+	tests := []struct {
+		name       string
+		body       string
+		wantStatus int
+		wantCode   service.Code
+	}{
+		{"unterminated body", `{"operation":`, http.StatusBadRequest, service.CodeMalformedJSON},
+		{"body is not an object", `[1,2]`, http.StatusBadRequest, service.CodeMalformedJSON},
+		{"empty body", ``, http.StatusBadRequest, service.CodeMalformedJSON},
+		{"operation absent", `{"operands":[1,2]}`, http.StatusBadRequest, service.CodeMissingField},
+		{"operands absent", `{"operation":"add"}`, http.StatusBadRequest, service.CodeMissingField},
+		{"unknown operation", `{"operation":"tangent","operands":[1,2]}`, http.StatusBadRequest, service.CodeUnsupportedOperation},
+		{"too few operands", `{"operation":"add","operands":[1]}`, http.StatusBadRequest, service.CodeInvalidOperandCount},
+		{"too many operands", `{"operation":"add","operands":[1,2,3]}`, http.StatusBadRequest, service.CodeInvalidOperandCount},
+		{"operand is text", `{"operation":"add","operands":[1,"abc"]}`, http.StatusBadRequest, service.CodeInvalidOperand},
+		{"operand is the word NaN", `{"operation":"add","operands":[1,"NaN"]}`, http.StatusBadRequest, service.CodeInvalidOperand},
+		{"operand is the word Infinity", `{"operation":"add","operands":[1,"Infinity"]}`, http.StatusBadRequest, service.CodeInvalidOperand},
+		{"operand is a boolean", `{"operation":"add","operands":[1,true]}`, http.StatusBadRequest, service.CodeInvalidOperand},
+		{"operand is null", `{"operation":"add","operands":[1,null]}`, http.StatusBadRequest, service.CodeInvalidOperand},
+		{"operand too large", `{"operation":"add","operands":[1e400,1]}`, http.StatusBadRequest, service.CodeOperandOutOfRange},
+		{"divisor is zero", `{"operation":"divide","operands":[1,0]}`, http.StatusUnprocessableEntity, service.CodeDivisionByZero},
+		{"result overflows", `{"operation":"multiply","operands":[1e308,10]}`, http.StatusUnprocessableEntity, service.CodeResultOverflow},
+		{"result underflows", `{"operation":"multiply","operands":[1e-200,1e-200]}`, http.StatusUnprocessableEntity, service.CodeResultUnderflow},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			recorder := post(t, tt.body)
+
+			if recorder.Code != tt.wantStatus {
+				t.Errorf("status = %d, want %d", recorder.Code, tt.wantStatus)
+			}
+			if contentType := recorder.Header().Get("Content-Type"); contentType != "application/json" {
+				t.Errorf("Content-Type = %q, want %q", contentType, "application/json")
+			}
+
+			detail := envelopeShape(t, recorder.Body.Bytes())
+			if detail["code"] != string(tt.wantCode) {
+				t.Errorf("code = %v, want %q", detail["code"], tt.wantCode)
+			}
+		})
+	}
+}
+
+func TestEveryCodeSerializesIntoTheSameEnvelope(t *testing.T) {
+	for _, code := range service.AllCodes {
+		t.Run(string(code), func(t *testing.T) {
+			recorder := httptest.NewRecorder()
+			writeError(recorder, &service.Error{Code: code, Message: "failure detail"})
+
+			status, mapped := statusByCode[code]
+			if !mapped {
+				t.Fatalf("code %q has no status mapping", code)
+			}
+			if recorder.Code != status {
+				t.Errorf("status = %d, want %d", recorder.Code, status)
+			}
+
+			detail := envelopeShape(t, recorder.Body.Bytes())
+			if detail["code"] != string(code) {
+				t.Errorf("code = %v, want %q", detail["code"], code)
+			}
+		})
+	}
+}
+
+func TestErrorResponsesNeverContainNonFiniteTokens(t *testing.T) {
+	bodies := []string{
+		`{"operation":"multiply","operands":[1e308,10]}`,
+		`{"operation":"multiply","operands":[1e-200,1e-200]}`,
+		`{"operation":"divide","operands":[1,0]}`,
+		`{"operation":"add","operands":[1e400,1]}`,
+	}
+
+	for _, body := range bodies {
+		t.Run(body, func(t *testing.T) {
+			response := post(t, body).Body.String()
+			for _, token := range []string{"Infinity", "-Infinity", "NaN", "Inf"} {
+				if strings.Contains(response, token) {
+					t.Errorf("response contains %q: %s", token, response)
+				}
+			}
+		})
+	}
+}

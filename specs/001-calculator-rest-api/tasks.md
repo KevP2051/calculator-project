@@ -175,7 +175,7 @@ share one envelope shape, and no error body contains a `result` field.
       for `add`), `INVALID_OPERAND` (string, boolean, null, `"NaN"`, `"Infinity"` — all one
       code per FR-035), and `OPERAND_OUT_OF_RANGE` (`1e400`, `-1e400`). Assert explicitly
       that `INVALID_OPERAND` and `OPERAND_OUT_OF_RANGE` are different codes (FR-022a).
-- [ ] T013 [US2] Implement the error envelope in `backend/internal/api/handler.go`:
+- [X] T013 [US2] Implement the error envelope in `backend/internal/api/handler.go`:
       `{"error":{"code":"...","message":"..."}}`, status from the T005 table, and
       `MALFORMED_JSON` for a body that fails to decode or is not a JSON object (FR-019).
       Confirm extra unrecognized fields are ignored rather than rejected. Tests in
