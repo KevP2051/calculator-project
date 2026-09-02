@@ -74,14 +74,14 @@ depends on all of it.
       `ErrDivisionByZero`, `ErrOutOfDomain`, `ErrOverflow`, `ErrUnderflow`, `ErrUndefined`.
       Plain `errors.New` sentinels, comparable with `errors.Is`. This file must import
       nothing beyond `errors` (Constitution II).
-- [ ] T004 [P] Define the service error type and the eleven stable codes in
+- [X] T004 [P] Define the service error type and the eleven stable codes in
       `backend/internal/service/errors.go`, exactly as catalogued in
       [contracts/error-codes.md](contracts/error-codes.md): `MALFORMED_JSON`,
       `MISSING_FIELD`, `UNSUPPORTED_OPERATION`, `INVALID_OPERAND_COUNT`, `INVALID_OPERAND`,
       `OPERAND_OUT_OF_RANGE`, `DIVISION_BY_ZERO`, `OPERAND_OUT_OF_DOMAIN`,
       `RESULT_OVERFLOW`, `RESULT_UNDERFLOW`, `RESULT_UNDEFINED`. Include the mapping from
       each `calc` sentinel to its code. Must not import `net/http` (FR-012a).
-- [ ] T005 [P] Implement the code-to-HTTP-status table in `backend/internal/api/status.go`
+- [X] T005 [P] Implement the code-to-HTTP-status table in `backend/internal/api/status.go`
       (400 for the six request-fault codes, 422 for the five calculation-fault codes) with a
       table test in `backend/internal/api/status_test.go` asserting every one of the eleven
       codes maps to a non-zero status. A code with no mapping must fail the test, not
