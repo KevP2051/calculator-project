@@ -227,7 +227,7 @@ values, and `sqrt(-9)` plus a negative base with a fractional exponent both retu
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T017 Generate the coverage report from `backend/`:
+- [X] T017 Generate the coverage report from `backend/`:
       `go test ./... -coverprofile=coverage.out` then
       `go tool cover -html=coverage.out -o coverage.html`. Confirm at least 80% on
       `internal/calc` and `internal/service`. If either falls short, add the missing cases
