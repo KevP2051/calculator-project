@@ -91,14 +91,14 @@ depends on all of it.
       `CheckUnderflow`, plus a `Lookup(name string) (Operation, bool)`. Registry starts
       empty; operations are registered by their own tasks. Per
       [data-model.md](data-model.md).
-- [ ] T007 Implement the result guards in `backend/internal/calc/guard.go` with tests in
+- [X] T007 Implement the result guards in `backend/internal/calc/guard.go` with tests in
       `backend/internal/calc/guard_test.go`: a non-finite check mapping `+Inf`/`-Inf` to
       `ErrOverflow` and `NaN` to `ErrUndefined` (FR-024), and an underflow check returning
       `ErrUnderflow` when the result is zero and every operand is non-zero (FR-024a). Tests
       must cover: a zero result with a zero operand is NOT underflow, and `-0.0` is treated
       as zero. Add a comment on the underflow guard citing FR-024d — it must never be
       attached to `add`, `subtract`, or `sqrt`.
-- [ ] T008 Build the server bootstrap: `backend/internal/api/router.go` (a `ServeMux` with
+- [X] T008 Build the server bootstrap: `backend/internal/api/router.go` (a `ServeMux` with
       `GET /healthz` returning `{"status":"ok"}`, plus CORS middleware reading `CORS_ORIGIN`
       with default `http://localhost:5173`, handling `OPTIONS` preflight) and
       `backend/cmd/server/main.go` (reads `PORT`, default `8080`, then `ListenAndServe`).
