@@ -123,7 +123,7 @@ return US2's error codes, because they are branches of one function — splittin
 phases would mean writing the function twice. US1 tests its happy path; US2 tests those
 branches exhaustively and is where they are verified.
 
-- [ ] T009 [US1] Implement `add`, `subtract`, `multiply`, `divide` in
+- [X] T009 [US1] Implement `add`, `subtract`, `multiply`, `divide` in
       `backend/internal/calc/operations.go` and register them in the T006 registry
       (`CheckUnderflow` true for `multiply` and `divide`, false for `add` and `subtract`,
       per FR-024d). `divide` returns `ErrDivisionByZero` when the divisor is zero, before
