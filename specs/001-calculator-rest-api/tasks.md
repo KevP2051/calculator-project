@@ -86,7 +86,7 @@ depends on all of it.
       table test in `backend/internal/api/status_test.go` asserting every one of the eleven
       codes maps to a non-zero status. A code with no mapping must fail the test, not
       default silently (R6).
-- [ ] T006 Define the `Operation` struct and the empty registry in
+- [X] T006 Define the `Operation` struct and the empty registry in
       `backend/internal/calc/operation.go`: fields `Name`, `Arity`, `Apply`,
       `CheckUnderflow`, plus a `Lookup(name string) (Operation, bool)`. Registry starts
       empty; operations are registered by their own tasks. Per
