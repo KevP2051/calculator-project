@@ -182,7 +182,7 @@ share one envelope shape, and no error body contains a `result` field.
       `backend/internal/api/handler_test.go`: one round trip per code asserting status, code,
       and the absence of any `result` key in the body (FR-015); plus a test asserting all
       eleven error responses share the same top-level shape (FR-011, SC-006).
-- [ ] T014 [US2] Add the calculation-failure round trips to
+- [X] T014 [US2] Add the calculation-failure round trips to
       `backend/internal/api/handler_test.go`: `DIVISION_BY_ZERO` (422), `RESULT_OVERFLOW`
       (`1e308 * 10`), `RESULT_UNDERFLOW` (`1e-200 * 1e-200`), and a test asserting no
       response body ever contains the tokens `Infinity`, `-Infinity`, or `NaN` (FR-016,

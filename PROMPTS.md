@@ -2,7 +2,6 @@
 
 ## Prompt 001 — Project Constitution
 
-### Prompt
 Project context:
 - Full-stack calculator application.
 - Go backend exposing a stateless REST API.
@@ -146,3 +145,5 @@ Do not change anything else.
 /speckit-implement
 Review the constitution and tasks.md before implementing.
 
+## Prompt 008 - Project implementation
+Do all of these tests directly correspond to requirements in the specification/tasks, or were any of them added solely to increase test coverage?

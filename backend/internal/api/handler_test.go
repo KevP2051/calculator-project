@@ -246,3 +246,47 @@ func TestErrorResponsesNeverContainNonFiniteTokens(t *testing.T) {
 		})
 	}
 }
+
+func TestSubnormalSubtractionSucceedsOverHTTP(t *testing.T) {
+	tests := []struct {
+		name string
+		body string
+		want float64
+	}{
+		{"equal subnormals cancel", `{"operation":"subtract","operands":[5e-324,5e-324]}`, 0},
+		{"adjacent subnormals", `{"operation":"subtract","operands":[1.5e-323,1e-323]}`, 5e-324},
+		{"exact cancellation", `{"operation":"subtract","operands":[5,5]}`, 0},
+		{"zero operand in multiplication", `{"operation":"multiply","operands":[0,5]}`, 0},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := decodeResult(t, post(t, tt.body)); got != tt.want {
+				t.Errorf("result = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestSuccessfulResponsesNeverContainNonFiniteTokens(t *testing.T) {
+	bodies := []string{
+		`{"operation":"multiply","operands":[1e308,1]}`,
+		`{"operation":"divide","operands":[1e308,10]}`,
+		`{"operation":"add","operands":[1.7976931348623157e308,0]}`,
+		`{"operation":"subtract","operands":[5e-324,5e-324]}`,
+	}
+
+	for _, body := range bodies {
+		t.Run(body, func(t *testing.T) {
+			recorder := post(t, body)
+			if recorder.Code != http.StatusOK {
+				t.Fatalf("status = %d, want %d, body %s", recorder.Code, http.StatusOK, recorder.Body.String())
+			}
+			for _, token := range []string{"Infinity", "-Infinity", "NaN", "Inf", "null"} {
+				if strings.Contains(recorder.Body.String(), token) {
+					t.Errorf("response contains %q: %s", token, recorder.Body.String())
+				}
+			}
+		})
+	}
+}
