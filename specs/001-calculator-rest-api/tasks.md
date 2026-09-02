@@ -137,7 +137,7 @@ branches exhaustively and is where they are verified.
       `ErrOverflow`; `1e-200 * 1e-200` returning `ErrUnderflow`. Comparison follows FR-031a:
       exact equality throughout this task, since every expected value here is exactly
       representable.
-- [ ] T010 [US1] Implement the validation pipeline in
+- [X] T010 [US1] Implement the validation pipeline in
       `backend/internal/service/calculate.go`: accept the decoded request shape
       (`Operation string`, `Operands []any` with `json.Number` elements), then run steps 2-6
       of [data-model.md](data-model.md) — field presence, registry lookup, arity check,
