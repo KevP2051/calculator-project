@@ -1,8 +1,9 @@
+import CalculatorPage from "./calculator/pages/CalculatorPage"
 
 const CalculatorApp = () => {
     return (
         <>
-            <h1>Calculator app</h1>
+            <CalculatorPage />
         </>
     )
 }
