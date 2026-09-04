@@ -1,4 +1,4 @@
-import { calculatorApi } from "@/common/api/calculator.api"
+import { calculatorApi } from "../api/calculator.api"
 import type { Operation } from "../constants/operations"
 import type { CalculationRequest, CalculationResponse } from "../types/calculation.types"
 
