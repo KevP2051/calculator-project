@@ -1,0 +1,527 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>server: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">calculator/backend/cmd/server/main.go (0.0%)</option>
+				
+				<option value="file1">calculator/backend/internal/api/handler.go (94.7%)</option>
+				
+				<option value="file2">calculator/backend/internal/api/router.go (100.0%)</option>
+				
+				<option value="file3">calculator/backend/internal/calc/guard.go (100.0%)</option>
+				
+				<option value="file4">calculator/backend/internal/calc/operation.go (100.0%)</option>
+				
+				<option value="file5">calculator/backend/internal/calc/operations.go (100.0%)</option>
+				
+				<option value="file6">calculator/backend/internal/service/calculate.go (93.5%)</option>
+				
+				<option value="file7">calculator/backend/internal/service/errors.go (100.0%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package main
+
+import (
+        "log"
+        "net/http"
+        "os"
+
+        "calculator/backend/internal/api"
+)
+
+func main() {
+        <span class="cov0" title="0">address := ":" + envOr("PORT", "8080")
+        handler := api.NewRouter(envOr("CORS_ORIGIN", "http://localhost:5173"))
+</span>
+        <span class="cov0" title="0">log.Printf("calculator backend listening on %s", address)
+</span>
+        <span class="cov0" title="0">if err := http.ListenAndServe(address, handler); err != nil </span>{
+                <span class="cov0" title="0">log.Fatal(err)
+</span>        }
+}
+
+func envOr(key, fallback string) string {
+        <span class="cov0" title="0">if value := os.Getenv(key); value != "" </span>{
+                <span class="cov0" title="0">return value
+</span>        }
+        <span class="cov0" title="0">return fallback</span>
+}
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">package api
+
+import (
+        "encoding/json"
+        "net/http"
+
+        "calculator/backend/internal/service"
+)
+
+type calculateRequest struct {
+        Operation string `json:"operation"`
+        Operands  []any  `json:"operands"`
+}
+
+type calculateResponse struct {
+        Result float64 `json:"result"`
+}
+
+type errorDetail struct {
+        Code    service.Code `json:"code"`
+        Message string       `json:"message"`
+}
+
+type errorResponse struct {
+        Error errorDetail `json:"error"`
+}
+
+func handleCalculate(w http.ResponseWriter, r *http.Request) {
+        <span class="cov8" title="1">decoder := json.NewDecoder(r.Body)
+        decoder.UseNumber()
+</span>
+        <span class="cov8" title="1">var request calculateRequest
+        if err := decoder.Decode(&amp;request); err != nil </span>{
+                <span class="cov8" title="1">writeError(w, &amp;service.Error{
+                        Code:    service.CodeMalformedJSON,
+                        Message: "request body is not a valid JSON object",
+                })
+                return
+</span>        }
+
+        <span class="cov8" title="1">result, failure := service.Calculate(service.Request{
+                Operation: request.Operation,
+                Operands:  request.Operands,
+        })
+        if failure != nil </span>{
+                <span class="cov8" title="1">writeError(w, failure)
+                return
+</span>        }
+
+        <span class="cov8" title="1">writeJSON(w, http.StatusOK, calculateResponse{Result: result})</span>
+}
+
+func writeError(w http.ResponseWriter, failure *service.Error) {
+        <span class="cov8" title="1">status, ok := statusByCode[failure.Code]
+        if !ok </span>{
+                <span class="cov0" title="0">status = http.StatusInternalServerError
+</span>        }
+
+        <span class="cov8" title="1">writeJSON(w, status, errorResponse{
+                Error: errorDetail{Code: failure.Code, Message: failure.Message},
+        })</span>
+}
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">package api
+
+import (
+        "encoding/json"
+        "net/http"
+)
+
+func NewRouter(corsOrigin string) http.Handler {
+        <span class="cov8" title="1">mux := http.NewServeMux()
+        mux.HandleFunc("GET /healthz", handleHealth)
+        mux.HandleFunc("POST /api/v1/calculate", handleCalculate)
+</span>
+        <span class="cov8" title="1">return withCORS(mux, corsOrigin)
+</span>}
+
+func handleHealth(w http.ResponseWriter, r *http.Request) {
+        <span class="cov8" title="1">writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+</span>}
+
+func withCORS(next http.Handler, origin string) http.Handler {
+        <span class="cov8" title="1">return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) </span>{
+                <span class="cov8" title="1">w.Header().Set("Access-Control-Allow-Origin", origin)
+                w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+                w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+</span>
+                <span class="cov8" title="1">if r.Method == http.MethodOptions </span>{
+                        <span class="cov8" title="1">w.WriteHeader(http.StatusNoContent)
+                        return
+</span>                }
+
+                <span class="cov8" title="1">next.ServeHTTP(w, r)</span>
+        })
+}
+
+func writeJSON(w http.ResponseWriter, status int, body any) {
+        <span class="cov8" title="1">w.Header().Set("Content-Type", "application/json")
+        w.WriteHeader(status)
+        _ = json.NewEncoder(w).Encode(body)
+</span>}
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">package calc
+
+import "math"
+
+func checkFinite(result float64) error {
+        <span class="cov8" title="1">switch </span>{
+        case math.IsNaN(result):
+                <span class="cov8" title="1">return ErrUndefined</span>
+        case math.IsInf(result, 0):
+                <span class="cov8" title="1">return ErrOverflow</span>
+        }
+        <span class="cov8" title="1">return nil</span>
+}
+
+func checkUnderflow(result float64, operands []float64) error {
+        <span class="cov8" title="1">if result != 0 </span>{
+                <span class="cov8" title="1">return nil
+</span>        }
+        <span class="cov8" title="1">for _, operand := range operands </span>{
+                <span class="cov8" title="1">if operand == 0 </span>{
+                        <span class="cov8" title="1">return nil
+</span>                }
+        }
+        <span class="cov8" title="1">return ErrUnderflow</span>
+}
+
+func guardResult(op Operation, operands []float64, result float64) error {
+        <span class="cov8" title="1">if err := checkFinite(result); err != nil </span>{
+                <span class="cov8" title="1">return err
+</span>        }
+        <span class="cov8" title="1">if op.CheckUnderflow </span>{
+                <span class="cov8" title="1">return checkUnderflow(result, operands)
+</span>        }
+        <span class="cov8" title="1">return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file4" style="display: none">package calc
+
+type Operation struct {
+        Name           string
+        Arity          int
+        Apply          func(operands []float64) (float64, error)
+        CheckUnderflow bool
+}
+
+var registry = map[string]Operation{}
+
+func register(op Operation) {
+        <span class="cov8" title="1">registry[op.Name] = op
+</span>}
+
+func Lookup(name string) (Operation, bool) {
+        <span class="cov8" title="1">op, ok := registry[name]
+        return op, ok
+</span>}
+</pre>
+		
+		<pre class="file" id="file5" style="display: none">package calc
+
+import "math"
+
+func init() {
+        <span class="cov8" title="1">register(Operation{Name: "add", Arity: 2, Apply: add})
+        register(Operation{Name: "subtract", Arity: 2, Apply: subtract})
+        register(Operation{Name: "multiply", Arity: 2, Apply: multiply, CheckUnderflow: true})
+        register(Operation{Name: "divide", Arity: 2, Apply: divide, CheckUnderflow: true})
+        register(Operation{Name: "power", Arity: 2, Apply: power, CheckUnderflow: true})
+        register(Operation{Name: "sqrt", Arity: 1, Apply: squareRoot})
+        register(Operation{Name: "percentage", Arity: 2, Apply: percentage, CheckUnderflow: true})
+</span>}
+
+func Compute(op Operation, operands []float64) (float64, error) {
+        <span class="cov8" title="1">result, err := op.Apply(operands)
+        if err != nil </span>{
+                <span class="cov8" title="1">return 0, err
+</span>        }
+
+        <span class="cov8" title="1">if err := guardResult(op, operands, result); err != nil </span>{
+                <span class="cov8" title="1">return 0, err
+</span>        }
+
+        <span class="cov8" title="1">return result, nil</span>
+}
+
+func add(operands []float64) (float64, error) {
+        <span class="cov8" title="1">return operands[0] + operands[1], nil
+</span>}
+
+func subtract(operands []float64) (float64, error) {
+        <span class="cov8" title="1">return operands[0] - operands[1], nil
+</span>}
+
+func multiply(operands []float64) (float64, error) {
+        <span class="cov8" title="1">return operands[0] * operands[1], nil
+</span>}
+
+func divide(operands []float64) (float64, error) {
+        <span class="cov8" title="1">if operands[1] == 0 </span>{
+                <span class="cov8" title="1">return 0, ErrDivisionByZero
+</span>        }
+
+        <span class="cov8" title="1">return operands[0] / operands[1], nil</span>
+}
+
+func power(operands []float64) (float64, error) {
+        <span class="cov8" title="1">base, exponent := operands[0], operands[1]
+</span>
+        <span class="cov8" title="1">if base &lt; 0 &amp;&amp; exponent != math.Trunc(exponent) </span>{
+                <span class="cov8" title="1">return 0, ErrOutOfDomain
+</span>        }
+
+        <span class="cov8" title="1">return math.Pow(base, exponent), nil</span>
+}
+
+func squareRoot(operands []float64) (float64, error) {
+        <span class="cov8" title="1">if operands[0] &lt; 0 </span>{
+                <span class="cov8" title="1">return 0, ErrOutOfDomain
+</span>        }
+
+        <span class="cov8" title="1">return math.Sqrt(operands[0]), nil</span>
+}
+
+func percentage(operands []float64) (float64, error) {
+        <span class="cov8" title="1">return operands[0] / 100 * operands[1], nil
+</span>}
+</pre>
+		
+		<pre class="file" id="file6" style="display: none">package service
+
+import (
+        "encoding/json"
+        "errors"
+        "fmt"
+        "strconv"
+
+        "calculator/backend/internal/calc"
+)
+
+type Request struct {
+        Operation string
+        Operands  []any
+}
+
+func Calculate(req Request) (float64, *Error) {
+        <span class="cov8" title="1">if req.Operation == "" </span>{
+                <span class="cov8" title="1">return 0, &amp;Error{Code: CodeMissingField, Message: "operation is required"}
+</span>        }
+
+        <span class="cov8" title="1">if req.Operands == nil </span>{
+                <span class="cov8" title="1">return 0, &amp;Error{Code: CodeMissingField, Message: "operands is required"}
+</span>        }
+
+        <span class="cov8" title="1">op, ok := calc.Lookup(req.Operation)
+        if !ok </span>{
+                <span class="cov8" title="1">return 0, &amp;Error{
+                        Code:    CodeUnsupportedOperation,
+                        Message: fmt.Sprintf("unsupported operation %q", req.Operation),
+</span>                }
+        }
+
+        <span class="cov8" title="1">if len(req.Operands) != op.Arity </span>{
+                <span class="cov8" title="1">return 0, &amp;Error{
+                        Code:    CodeInvalidOperandCount,
+                        Message: fmt.Sprintf("%s takes %d operands, got %d", op.Name, op.Arity, len(req.Operands)),
+</span>                }
+        }
+
+        <span class="cov8" title="1">operands, operandErr := parseOperands(req.Operands)
+        if operandErr != nil </span>{
+                <span class="cov8" title="1">return 0, operandErr
+</span>        }
+
+        <span class="cov8" title="1">result, err := calc.Compute(op, operands)
+        if err != nil </span>{
+                <span class="cov8" title="1">if failure, mapped := errorForCalcFailure(err); mapped </span>{
+                        <span class="cov8" title="1">return 0, failure
+</span>                }
+                <span class="cov0" title="0">return 0, &amp;Error{Code: CodeResultUndefined, Message: err.Error()}</span>
+        }
+
+        <span class="cov8" title="1">return result, nil</span>
+}
+
+func parseOperands(values []any) ([]float64, *Error) {
+        <span class="cov8" title="1">operands := make([]float64, len(values))
+</span>
+        <span class="cov8" title="1">for i, value := range values </span>{
+                <span class="cov8" title="1">number, ok := value.(json.Number)
+                if !ok </span>{
+                        <span class="cov8" title="1">return nil, &amp;Error{
+                                Code:    CodeInvalidOperand,
+                                Message: fmt.Sprintf("operand %d is not a number", i),
+</span>                        }
+                }
+
+                <span class="cov8" title="1">parsed, err := strconv.ParseFloat(number.String(), 64)
+                switch </span>{
+                case errors.Is(err, strconv.ErrRange):
+                        <span class="cov8" title="1">return nil, &amp;Error{
+                                Code:    CodeOperandOutOfRange,
+                                Message: fmt.Sprintf("operand %d is outside the range representable as a finite float64", i),
+</span>                        }
+                case err != nil:
+                        <span class="cov0" title="0">return nil, &amp;Error{
+                                Code:    CodeInvalidOperand,
+                                Message: fmt.Sprintf("operand %d is not a number", i),
+</span>                        }
+                }
+
+                <span class="cov8" title="1">operands[i] = parsed</span>
+        }
+
+        <span class="cov8" title="1">return operands, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file7" style="display: none">package service
+
+import (
+        "errors"
+
+        "calculator/backend/internal/calc"
+)
+
+type Code string
+
+const (
+        CodeMalformedJSON        Code = "MALFORMED_JSON"
+        CodeMissingField         Code = "MISSING_FIELD"
+        CodeUnsupportedOperation Code = "UNSUPPORTED_OPERATION"
+        CodeInvalidOperandCount  Code = "INVALID_OPERAND_COUNT"
+        CodeInvalidOperand       Code = "INVALID_OPERAND"
+        CodeOperandOutOfRange    Code = "OPERAND_OUT_OF_RANGE"
+        CodeDivisionByZero       Code = "DIVISION_BY_ZERO"
+        CodeOperandOutOfDomain   Code = "OPERAND_OUT_OF_DOMAIN"
+        CodeResultOverflow       Code = "RESULT_OVERFLOW"
+        CodeResultUnderflow      Code = "RESULT_UNDERFLOW"
+        CodeResultUndefined      Code = "RESULT_UNDEFINED"
+)
+
+var AllCodes = []Code{
+        CodeMalformedJSON,
+        CodeMissingField,
+        CodeUnsupportedOperation,
+        CodeInvalidOperandCount,
+        CodeInvalidOperand,
+        CodeOperandOutOfRange,
+        CodeDivisionByZero,
+        CodeOperandOutOfDomain,
+        CodeResultOverflow,
+        CodeResultUnderflow,
+        CodeResultUndefined,
+}
+
+type Error struct {
+        Code    Code
+        Message string
+}
+
+var codeByCalcError = map[error]Code{
+        calc.ErrDivisionByZero: CodeDivisionByZero,
+        calc.ErrOutOfDomain:    CodeOperandOutOfDomain,
+        calc.ErrOverflow:       CodeResultOverflow,
+        calc.ErrUnderflow:      CodeResultUnderflow,
+        calc.ErrUndefined:      CodeResultUndefined,
+}
+
+func errorForCalcFailure(err error) (*Error, bool) {
+        <span class="cov8" title="1">for sentinel, code := range codeByCalcError </span>{
+                <span class="cov8" title="1">if errors.Is(err, sentinel) </span>{
+                        <span class="cov8" title="1">return &amp;Error{Code: code, Message: err.Error()}, true
+</span>                }
+        }
+        <span class="cov8" title="1">return nil, false</span>
+}
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>

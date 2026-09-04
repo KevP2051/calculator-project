@@ -101,7 +101,7 @@ go test ./... -coverprofile=coverage.out
 go tool cover -html=coverage.out -o coverage.html
 ```
 
-Current coverage — regenerate with the commands above; the report itself is gitignored:
+The generated report is committed at [`coverage.html`](coverage.html), with the raw profile at [`coverage.out`](coverage.out); the commands above overwrite both in place. Current coverage:
 
 | Package | Coverage |
 |---|---|
@@ -110,7 +110,7 @@ Current coverage — regenerate with the commands above; the report itself is gi
 | `internal/service` | 94.3% |
 | `cmd/server` | 0.0% |
 
-`cmd/server` is `main` plus a four-line env helper; testing it means spawning a process. The arithmetic and validation layers are the ones that carry risk, and both run without starting an HTTP server.
+That works out to 86.5% across the module. `cmd/server` is `main` plus a four-line env helper; testing it means spawning a process. The arithmetic and validation layers are the ones that carry risk, and both run without starting an HTTP server.
 
 ## API
 

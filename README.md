@@ -174,6 +174,19 @@ npm run test:coverage
 
 The report is written to `frontend/coverage/index.html`.
 
+### Committed reports
+
+Both reports are checked into the repository, so they can be read without running anything. Open them from a local clone:
+
+| Layer | Report | Machine-readable profile |
+|---|---|---|
+| Microservice | [`backend/coverage.html`](backend/coverage.html) | [`backend/coverage.out`](backend/coverage.out) |
+| Frontend | [`frontend/coverage/index.html`](frontend/coverage/index.html) | [`frontend/coverage/lcov.info`](frontend/coverage/lcov.info) |
+
+Statement coverage is 86.5% across the whole Go module and 96.55% across the frontend's calculator feature. The Go figure is held down by `cmd/server`, which is `main` plus a four-line environment helper at 0.0%; the packages carrying the arithmetic and validation risk are at 100.0%, 97.7% and 94.3%. Per-package and per-file breakdowns are in the two guides below.
+
+Regenerating either report overwrites the committed copy in place, so a reviewer's own run and the checked-in version never drift apart.
+
 ## API examples
 
 The calculation endpoint is `POST http://localhost:8080/api/v1/calculate`.

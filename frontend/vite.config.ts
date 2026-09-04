@@ -16,7 +16,7 @@ export default defineConfig({
     setupFiles: './src/test/setup.ts',
     coverage: {
       provider: 'v8',
-      reporter: [['text', { skipFull: false }], 'html', 'lcov'],
+      reporter: [['text', { skipFull: false }], 'html', 'lcovonly'],
       include: ['src/calculator/**'],
       exclude: ['src/calculator/types/**'],
     }

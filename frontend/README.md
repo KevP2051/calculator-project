@@ -112,7 +112,7 @@ Coverage report:
 npm run test:coverage
 ```
 
-Prints a table and writes `coverage/index.html`.
+Prints a table and writes `coverage/index.html`. That report is committed, along with [`coverage/lcov.info`](coverage/lcov.info) for tooling, and rerunning the command overwrites both in place.
 
 | File | Statements | Branches |
 |---|---|---|
