@@ -3,13 +3,26 @@ import { Controller, useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { OPERATIONS, operationArity, type Operation } from "../constants/operations"
+import { OPERATIONS, findOperation, operationArity, type Operation } from "../constants/operations"
 import { Button } from "@/components/ui/button"
 import { calculationSchema, type CalculatorFormData } from "../schemas/calculation.schema"
 import useCalculate from "../hooks/useCalculate"
 
 const numberFieldClassName =
     "h-12 rounded-2xl text-right text-lg font-medium tabular-nums [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+
+
+const OperationLabel = ({ operation }: { operation: Operation }) => {
+
+    const { symbol, label } = findOperation(operation)
+
+    return (
+        <>
+            <span className="w-4 text-muted-foreground">{symbol}</span>
+            {label}
+        </>
+    )
+}
 
 
 const CalculatorPage = () => {
@@ -87,7 +100,9 @@ const CalculatorPage = () => {
                                         }}
                                     >
                                         <SelectTrigger id="operation" className="h-12 w-full rounded-2xl text-base">
-                                            <SelectValue />
+                                            <SelectValue className="gap-2">
+                                                {(value: Operation) => <OperationLabel operation={value} />}
+                                            </SelectValue>
                                         </SelectTrigger>
 
                                         <SelectContent>
@@ -96,8 +111,7 @@ const CalculatorPage = () => {
                                                     key={operation.value}
                                                     value={operation.value}
                                                 >
-                                                    <span className="w-4 text-muted-foreground">{operation.symbol}</span>
-                                                    {operation.label}
+                                                    <OperationLabel operation={operation.value} />
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>

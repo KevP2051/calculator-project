@@ -11,5 +11,7 @@ export const OPERATIONS = [
 export type Operation =
     (typeof OPERATIONS)[number]["value"];
 
-export const operationArity = (operation: Operation) =>
-    OPERATIONS.find((entry) => entry.value === operation)!.arity;
+export const findOperation = (operation: Operation) =>
+    OPERATIONS.find((entry) => entry.value === operation)!;
+
+export const operationArity = (operation: Operation) => findOperation(operation).arity;
