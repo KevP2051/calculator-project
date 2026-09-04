@@ -7,6 +7,7 @@ import { OPERATIONS, findOperation, operationArity, type Operation } from "../co
 import { Button } from "@/components/ui/button"
 import { calculationSchema, type CalculatorFormData } from "../schemas/calculation.schema"
 import useCalculate from "../hooks/useCalculate"
+import { formatResult } from "../utils/format-result"
 
 const numberFieldClassName =
     "h-12 rounded-2xl text-right text-lg font-medium tabular-nums [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
@@ -39,6 +40,12 @@ const CalculatorPage = () => {
 
     const selectedOperation = useWatch({ control: calculatorForm.control, name: 'operation' })
     const takesSecondNumber = operationArity(selectedOperation) === 2
+
+    const formattedResult = calculate.data ? formatResult(calculate.data.result) : '--'
+
+    const resultTextClassName = formattedResult.length > 13
+        ? "text-base sm:text-xl"
+        : "text-2xl sm:text-3xl"
 
     const onSubmit = (formData: CalculatorFormData) => {
         calculate.mutate({
@@ -156,7 +163,9 @@ const CalculatorPage = () => {
 
                     <div className="rounded-3xl bg-muted/50 px-5 py-4 text-center">
                         <p className="text-xs font-medium text-muted-foreground">Result</p>
-                        <p className="mt-1 text-3xl font-semibold tabular-nums tracking-tight text-foreground">{calculate.data?.result ?? '--'}</p>
+                        <p className={`mt-1 font-semibold tabular-nums tracking-tight text-foreground ${resultTextClassName}`}>
+                            {formattedResult}
+                        </p>
                     </div>
 
 
