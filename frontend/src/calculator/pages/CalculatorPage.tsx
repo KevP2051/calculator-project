@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { OPERATIONS } from "../constants/operations"
 import { Button } from "@/components/ui/button"
 import { calculationSchema, type CalculatorFormData } from "../schemas/calculation.schema"
+import useCalculate from "../hooks/useCalculate"
 
 const numberFieldClassName =
     "h-12 rounded-2xl text-right text-lg font-medium tabular-nums [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
@@ -23,8 +24,14 @@ const CalculatorPage = () => {
         mode: "onSubmit"
     })
 
-    const onSubmit = () => {
+    const calculate = useCalculate()
 
+
+    const onSubmit = () => {
+        calculate.mutate({
+            operation: calculatorForm.getValues('operation'),
+            operands: [calculatorForm.getValues('firstNumber'), calculatorForm.getValues('secondNumber')]
+        })
     }
 
     return (
