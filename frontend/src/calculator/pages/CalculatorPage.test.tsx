@@ -6,7 +6,11 @@ import { toast } from 'sonner'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import CalculatorPage from './CalculatorPage'
 import { calculatorApi } from '../api/calculator.api'
-import { CALCULATION_ERROR_MESSAGES, NETWORK_ERROR_MESSAGE } from '../constants/error-messages'
+import {
+    CALCULATION_ERROR_MESSAGES,
+    NETWORK_ERROR_MESSAGE,
+    UNKNOWN_ERROR_MESSAGE,
+} from '../constants/error-messages'
 
 vi.mock('../api/calculator.api', () => ({
     calculatorApi: { post: vi.fn() },
@@ -163,6 +167,17 @@ describe('CalculatorPage', () => {
             expect(await screen.findByText('29')).toBeInTheDocument()
         })
 
+        it('displays a long result in full without truncating it', async () => {
+            backendReturns(100999999999998)
+            const user = renderCalculatorPage()
+
+            await user.type(firstNumberInput(), '999999999999')
+            await user.type(secondNumberInput(), '99999999999999')
+            await user.click(calculateButton())
+
+            expect(await screen.findByText('100,999,999,999,998')).toBeInTheDocument()
+        })
+
         it('displays the result formatted rather than raw', async () => {
             backendReturns(0.1 + 0.2)
             const user = renderCalculatorPage()
@@ -222,6 +237,28 @@ describe('CalculatorPage', () => {
 
             await waitFor(() => expect(toastErrorMock).toHaveBeenCalled())
             expect(toastErrorMock).not.toHaveBeenCalledWith(expect.stringContaining('backend detail'))
+        })
+
+        it('still tells the user something when the backend sends an unknown code', async () => {
+            backendRejectsWith('A_CODE_THIS_FRONTEND_DOES_NOT_KNOW')
+            const user = renderCalculatorPage()
+
+            await user.type(firstNumberInput(), '25')
+            await user.type(secondNumberInput(), '4')
+            await user.click(calculateButton())
+
+            await waitFor(() => expect(toastErrorMock).toHaveBeenCalledWith(UNKNOWN_ERROR_MESSAGE))
+        })
+
+        it('still tells the user something when the failure is not an http error', async () => {
+            postMock.mockRejectedValue(new Error('unexpected client failure'))
+            const user = renderCalculatorPage()
+
+            await user.type(firstNumberInput(), '25')
+            await user.type(secondNumberInput(), '4')
+            await user.click(calculateButton())
+
+            await waitFor(() => expect(toastErrorMock).toHaveBeenCalledWith(UNKNOWN_ERROR_MESSAGE))
         })
 
         it('reports a connection problem when the request never reaches the backend', async () => {
