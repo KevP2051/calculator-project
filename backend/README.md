@@ -2,50 +2,61 @@
 
 A stateless REST microservice for arithmetic, written in Go with no third-party dependencies. Seven operations over one endpoint, with a strict error contract: every failure returns the same JSON envelope carrying a stable machine-readable code.
 
-Built spec-first with [Spec Kit](https\://github.com/github/spec-kit). The specification, plan, research notes and task list live in [`specs/001-calculator-rest-api/`](../specs/001-calculator-rest-api/).
+Built spec-first with [Spec Kit](https://github.com/github/spec-kit). The specification, plan, research notes and task list live in [`specs/001-calculator-rest-api/`](../specs/001-calculator-rest-api/).
+
+For a complete full-stack guide, including frontend and Docker setup, see the [project README](../README.md).
+
+## Start from a fresh clone
+
+Run these commands from a terminal:
+
+```bash
+git clone https://github.com/KevP2051/calculator-project.git
+cd calculator-project/backend
+```
+
+If the repository is already cloned, open a terminal in its root and run `cd backend`.
 
 ## Prerequisites
 
 **Go 1.22 or later.** The floor is load-bearing: the service routes with the standard library's `ServeMux` using method patterns (`"POST /api/v1/calculate"`), which Go 1.22 introduced. That is what lets the project avoid a router dependency.
 
 ```bash
-
 go version
-
 ```
 
 No database, no message broker, no container runtime.
 
-## Run the server
+## Run the server locally
 
-From this directory:
+### 1. Start the API
+
+From the `backend` directory, run:
 
 ```bash
-
 go run ./cmd/server
-
 ```
 
-Listens on `:8080`. Confirm it is up:
+The API listens on `http://localhost:8080`. Keep this terminal open while using the frontend.
+
+### 2. Confirm the API is ready
+
+Open another terminal and run:
 
 ```bash
-
-curl -s http\://localhost:8080/healthz
-
+curl http://localhost:8080/healthz
 ```
+
+Expected response:
 
 ```json
-
 {"status":"ok"}
-
 ```
 
 To build a binary instead:
 
 ```bash
-
 go build -o server ./cmd/server && ./server
-
 ```
 
 ### Configuration
@@ -55,32 +66,39 @@ Two environment variables, both optional:
 | Variable | Default | Purpose |
 |---|---|---|
 | `PORT` | `8080` | Listen port |
-| `CORS_ORIGIN` | `http\://localhost:5173` | Single allowed browser origin. The default is the Vite dev server. |
+| `CORS_ORIGIN` | `http://localhost:5173` | Single allowed browser origin. The default is the Vite dev server. |
 
 ```bash
-
-PORT=9000 CORS_ORIGIN=http\://localhost:3000 go run ./cmd/server
-
+PORT=9000 CORS_ORIGIN=http://localhost:3000 go run ./cmd/server
 ```
 
 Nothing else is configurable, by design.
 
+## Run with Docker
+
+Docker runs this API together with the frontend. From the repository root (the directory containing `docker-compose.yml`), run:
+
+```bash
+docker compose up --build
+```
+
+The backend is exposed at `http://localhost:8080`, and the frontend is available at `http://localhost:5173`. Stop the services with:
+
+```bash
+docker compose down
+```
+
 ## Run the tests
 
 ```bash
-
 go test ./... -cover
-
 ```
 
 Coverage report:
 
 ```bash
-
 go test ./... -coverprofile=coverage.out
-
 go tool cover -html=coverage.out -o coverage.html
-
 ```
 
 Current coverage — regenerate with the commands above; the report itself is gitignored:

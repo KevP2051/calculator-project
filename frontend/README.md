@@ -4,6 +4,19 @@ This is the web app for the calculator project, built with React, TypeScript, an
 
 You type two numbers, pick an operation, and it calls the backend API and shows the result. The backend lives in [`../backend`](../backend/README.md).
 
+For a complete full-stack guide, including the API reference and Docker setup, see the [project README](../README.md).
+
+## Start from a fresh clone
+
+Run these commands from a terminal:
+
+```bash
+git clone https://github.com/KevP2051/calculator-project.git
+cd calculator-project/frontend
+```
+
+If the repository is already cloned, open a terminal in its root and run `cd frontend`.
+
 ## Prerequisites
 
 **Node 22.12 or later.** Vite runs on Node 20, but Vitest needs 22.12, so on Node 20 the app works and the tests do not start.
@@ -12,15 +25,41 @@ You type two numbers, pick an operation, and it calls the backend API and shows 
 node --version
 ```
 
-## Run the app
+## Run the app locally
+
+### 1. Start the backend
+
+The frontend requires the API. In a separate terminal, from the repository root, run:
 
 ```bash
-npm install
+cd backend
+go run ./cmd/server
+```
+
+Keep that terminal open. The API should be available at `http://localhost:8080`.
+
+### 2. Create the frontend environment file
+
+On macOS or Linux:
+
+```bash
 cp .env.example .env
+```
+
+On Windows PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+### 3. Install dependencies and start Vite
+
+```bash
+npm ci
 npm run dev
 ```
 
-Opens on `http://localhost:5173`.
+Open `http://localhost:5173` in a browser.
 
 The backend has to be running too, otherwise every calculation shows a "Cannot reach the server" message. See [`backend/README.md`](../backend/README.md).
 
@@ -33,6 +72,20 @@ One variable, in `.env`:
 | `VITE_API_URL` | `http://localhost:8080/api/v1` | Where the backend is |
 
 Vite reads it when it builds, not when the page runs, so a production build has the URL baked into it. Changing the backend URL means building again.
+
+## Run with Docker
+
+Docker starts this frontend and the Go backend together. From the repository root (the directory containing `docker-compose.yml`), run:
+
+```bash
+docker compose up --build
+```
+
+Open `http://localhost:5173`. To stop the containers, run:
+
+```bash
+docker compose down
+```
 
 ## Scripts
 
@@ -49,6 +102,7 @@ Vite reads it when it builds, not when the page runs, so a production build has 
 ## Run the tests
 
 ```bash
+npm ci
 npm test
 ```
 
