@@ -1,7 +1,25 @@
 
 import { useMutation } from '@tanstack/react-query'
+import { isAxiosError } from 'axios';
+import { toast } from 'sonner';
 import type { Operation } from '../constants/operations';
 import { calculateAction } from '../actions/calculate.action';
+import {
+    CALCULATION_ERROR_MESSAGES,
+    NETWORK_ERROR_MESSAGE,
+    UNKNOWN_ERROR_MESSAGE
+} from '../constants/error-messages';
+
+const resolveErrorMessage = (error: Error) => {
+
+    if (!isAxiosError(error)) return UNKNOWN_ERROR_MESSAGE;
+
+    if (!error.response) return NETWORK_ERROR_MESSAGE;
+
+    const code = error.response.data?.error?.code;
+
+    return CALCULATION_ERROR_MESSAGES[code] ?? UNKNOWN_ERROR_MESSAGE;
+}
 
 const useCalculate = () => {
 
@@ -9,14 +27,9 @@ const useCalculate = () => {
         mutationFn: async ({ operation, operands }: { operation: Operation, operands: number[] }) =>
             calculateAction(operation, operands),
         retry: false,
-        onSuccess: (data) => {
-            console.log('Calculation successful:', data);
-        },
         onError: (error) => {
-            console.error('Error occurred while calculating:', error);
+            toast.error(resolveErrorMessage(error));
         }
-
-
     })
 }
 
