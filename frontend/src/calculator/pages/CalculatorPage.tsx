@@ -17,8 +17,6 @@ const CalculatorPage = () => {
     const calculatorForm = useForm<CalculatorFormData>({
         resolver: zodResolver(calculationSchema),
         defaultValues: {
-            firstNumber: 0,
-            secondNumber: 0,
             operation: "add"
         },
         mode: "onSubmit"
