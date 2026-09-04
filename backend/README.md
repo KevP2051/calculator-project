@@ -1,10 +1,10 @@
-# Calculator Backend
+# Calculator Microservice
 
 A stateless REST microservice for arithmetic, written in Go with no third-party dependencies. Seven operations over one endpoint, with a strict error contract: every failure returns the same JSON envelope carrying a stable machine-readable code.
 
 Built spec-first with [Spec Kit](https://github.com/github/spec-kit). The specification, plan, research notes and task list live in [`specs/001-calculator-rest-api/`](../specs/001-calculator-rest-api/).
 
-For a complete full-stack guide, including frontend and Docker setup, see the [project README](../README.md).
+For a complete full-stack guide, including the frontend and Docker setup, see the [project README](../README.md).
 
 ## Start from a fresh clone
 
@@ -82,7 +82,7 @@ Docker runs this API together with the frontend. From the repository root (the d
 docker compose up --build
 ```
 
-The backend is exposed at `http://localhost:8080`, and the frontend is available at `http://localhost:5173`. Stop the services with:
+The microservice is exposed at `http://localhost:8080`, and the frontend is available at `http://localhost:5173`. Stop the services with:
 
 ```bash
 docker compose down
@@ -119,25 +119,19 @@ Current coverage — regenerate with the commands above; the report itself is gi
 Request:
 
 ```json
-
 { "operation": "add", "operands": [2, 3] }
-
 ```
 
 Success — HTTP 200:
 
 ```json
-
 { "result": 5 }
-
 ```
 
 Failure — HTTP 400 or 422:
 
 ```json
-
 { "error": { "code": "DIVISION_BY_ZERO", "message": "division by zero" } }
-
 ```
 
 Unrecognized extra fields in the request are ignored, not rejected.
@@ -165,61 +159,41 @@ Operand order is significant for `subtract`, `divide`, `power` and `percentage`.
 Every operation:
 
 ```bash
-
-curl -s -X POST localhost:8080/api/v1/calculate -H 'Content-Type: application/json' \\
-
+curl -s -X POST localhost:8080/api/v1/calculate -H 'Content-Type: application/json' \
   -d '{"operation":"add","operands":[2,3]}'
-
 # {"result":5}
 
-curl -s -X POST localhost:8080/api/v1/calculate -H 'Content-Type: application/json' \\
-
+curl -s -X POST localhost:8080/api/v1/calculate -H 'Content-Type: application/json' \
   -d '{"operation":"subtract","operands":[10,4]}'
-
 # {"result":6}
 
-curl -s -X POST localhost:8080/api/v1/calculate -H 'Content-Type: application/json' \\
-
+curl -s -X POST localhost:8080/api/v1/calculate -H 'Content-Type: application/json' \
   -d '{"operation":"multiply","operands":[6,7]}'
-
 # {"result":42}
 
-curl -s -X POST localhost:8080/api/v1/calculate -H 'Content-Type: application/json' \\
-
+curl -s -X POST localhost:8080/api/v1/calculate -H 'Content-Type: application/json' \
   -d '{"operation":"divide","operands":[10,4]}'
-
 # {"result":2.5}
 
-curl -s -X POST localhost:8080/api/v1/calculate -H 'Content-Type: application/json' \\
-
+curl -s -X POST localhost:8080/api/v1/calculate -H 'Content-Type: application/json' \
   -d '{"operation":"power","operands":[2,10]}'
-
 # {"result":1024}
 
-curl -s -X POST localhost:8080/api/v1/calculate -H 'Content-Type: application/json' \\
-
+curl -s -X POST localhost:8080/api/v1/calculate -H 'Content-Type: application/json' \
   -d '{"operation":"sqrt","operands":[9]}'
-
 # {"result":3}
 
-curl -s -X POST localhost:8080/api/v1/calculate -H 'Content-Type: application/json' \\
-
+curl -s -X POST localhost:8080/api/v1/calculate -H 'Content-Type: application/json' \
   -d '{"operation":"percentage","operands":[15,200]}'
-
 # {"result":30}
-
 ```
 
 Results are returned exactly as computed, never rounded:
 
 ```bash
-
-curl -s -X POST localhost:8080/api/v1/calculate -H 'Content-Type: application/json' \\
-
+curl -s -X POST localhost:8080/api/v1/calculate -H 'Content-Type: application/json' \
   -d '{"operation":"add","operands":[0.1,0.2]}'
-
 # {"result":0.30000000000000004}
-
 ```
 
 That is not a bug. `0.1 + 0.2` is genuinely `0.30000000000000004` in IEEE 754 binary64. Rounding it would mean returning a number the service did not compute, so display formatting is left to the client.
@@ -228,7 +202,7 @@ That is not a bug. `0.1 + 0.2` is genuinely `0.30000000000000004` in IEEE 754 bi
 
 One envelope for every failure. Branch on `code`; `message` is for humans and may be reworded without notice.
 
-****400 Bad Request**** — the request itself is wrong:
+**400 Bad Request** — the request itself is wrong:
 
 | Code | Cause |
 |---|---|
@@ -254,68 +228,47 @@ The router also returns `404` for an unknown path and `405` for a wrong method. 
 ### One example per category
 
 ```bash
-
-*# 422 DIVISION_BY_ZERO*
-
-curl -s -X POST localhost:8080/api/v1/calculate -H 'Content-Type: application/json' \\
-
+# 422 DIVISION_BY_ZERO
+curl -s -X POST localhost:8080/api/v1/calculate -H 'Content-Type: application/json' \
   -d '{"operation":"divide","operands":[1,0]}'
 
-*# 422 OPERAND_OUT_OF_DOMAIN*
-
-curl -s -X POST localhost:8080/api/v1/calculate -H 'Content-Type: application/json' \\
-
+# 422 OPERAND_OUT_OF_DOMAIN
+curl -s -X POST localhost:8080/api/v1/calculate -H 'Content-Type: application/json' \
   -d '{"operation":"sqrt","operands":[-9]}'
 
-*# 422 RESULT_OVERFLOW*
-
-curl -s -X POST localhost:8080/api/v1/calculate -H 'Content-Type: application/json' \\
-
+# 422 RESULT_OVERFLOW
+curl -s -X POST localhost:8080/api/v1/calculate -H 'Content-Type: application/json' \
   -d '{"operation":"multiply","operands":[1e308,10]}'
 
-*# 422 RESULT_UNDERFLOW*
-
-curl -s -X POST localhost:8080/api/v1/calculate -H 'Content-Type: application/json' \\
-
+# 422 RESULT_UNDERFLOW
+curl -s -X POST localhost:8080/api/v1/calculate -H 'Content-Type: application/json' \
   -d '{"operation":"multiply","operands":[1e-200,1e-200]}'
 
-*# 400 MALFORMED_JSON*
+# 400 MALFORMED_JSON
+curl -s -X POST localhost:8080/api/v1/calculate -H 'Content-Type: application/json' \
+  -d '{"operation":}'
 
-curl -s -X POST localhost:8080/api/v1/calculate -H 'Content-Type: application/json' \\
-
-  -d '{"operation":'}
-
-*# 400 MISSING_FIELD*
-
-curl -s -X POST localhost:8080/api/v1/calculate -H 'Content-Type: application/json' \\
-
+# 400 MISSING_FIELD
+curl -s -X POST localhost:8080/api/v1/calculate -H 'Content-Type: application/json' \
   -d '{"operands":[1,2]}'
 
-*# 400 UNSUPPORTED_OPERATION*
-
-curl -s -X POST localhost:8080/api/v1/calculate -H 'Content-Type: application/json' \\
-
+# 400 UNSUPPORTED_OPERATION
+curl -s -X POST localhost:8080/api/v1/calculate -H 'Content-Type: application/json' \
   -d '{"operation":"tangent","operands":[1,2]}'
 
-*# 400 INVALID_OPERAND_COUNT*
-
-curl -s -X POST localhost:8080/api/v1/calculate -H 'Content-Type: application/json' \\
-
+# 400 INVALID_OPERAND_COUNT
+curl -s -X POST localhost:8080/api/v1/calculate -H 'Content-Type: application/json' \
   -d '{"operation":"sqrt","operands":[9,4]}'
 
-*# 400 INVALID_OPERAND*
-
-curl -s -X POST localhost:8080/api/v1/calculate -H 'Content-Type: application/json' \\
-
+# 400 INVALID_OPERAND
+curl -s -X POST localhost:8080/api/v1/calculate -H 'Content-Type: application/json' \
   -d '{"operation":"add","operands":[1,"abc"]}'
 
-*# 400 OPERAND_OUT_OF_RANGE*
-
-curl -s -X POST localhost:8080/api/v1/calculate -H 'Content-Type: application/json' \\
-
+# 400 OPERAND_OUT_OF_RANGE
+curl -s -X POST localhost:8080/api/v1/calculate -H 'Content-Type: application/json' \
   -d '{"operation":"add","operands":[1e400,1]}'
-
 ```
+
 
 ## Project structure
 
@@ -329,11 +282,12 @@ backend/
 ```
 
 Dependencies point inward: `api` imports `service`, `service` imports `calc`, and `calc` imports only `errors` and `math`. This keeps the arithmetic layer independent of HTTP and JSON concerns.
+
 ## Design decisions
 
 ### Why Spec-Driven Development?
 
-I used Spec-Driven Development (SDD) for the backend with [GitHub Spec Kit](https://github.com/github/spec-kit). The goal was not to add process for its own sake, but to make requirements, edge cases, and engineering decisions explicit before implementation.
+I used Spec-Driven Development (SDD) for this microservice with [GitHub Spec Kit](https://github.com/github/spec-kit). The goal was not to add process for its own sake, but to make requirements, edge cases, and engineering decisions explicit before implementation.
 
 - **Specification:** I defined the API behavior, validation rules, edge cases, error semantics, and acceptance criteria in `spec.md`.
 - **Clarification:** I resolved open questions around numerical behavior and error classification.
@@ -366,7 +320,7 @@ AI assisted the implementation, but I drove the engineering process: requirement
 
 - **No arbitrary digit limit:** the API does not impose an application-level maximum number of digits. The effective range and precision are determined by the chosen `float64` representation rather than an arbitrary input limit.
 
-- **No rounding:** the backend returns the calculated `float64` result without applying presentation-level rounding. Formatting is left to the client.
+- **No rounding:** the microservice returns the calculated `float64` result without applying presentation-level rounding. Formatting is left to the client.
 
 - **Floating-point precision in tests:** comparisons are exact by default. A relative tolerance of `1e-9` is used only where the expected value is irrational and therefore not exactly representable, such as `sqrt(2)`. Everywhere else the tests require exact equality, including `0.1 + 0.2 == 0.30000000000000004`, because a tolerance-based comparison could hide a silently rounded result.
 
@@ -392,7 +346,7 @@ Detailed reasoning for the numerical decisions is documented in [`research.md`](
 
 ## Assumptions and known limitations
 
-- **REST API for the backend microservice:** I interpreted the requested Go microservice as a stateless HTTP REST API using JSON for communication with the frontend. This keeps the backend independently deployable and gives the frontend a simple, explicit contract to consume.
+- **REST API for the microservice:** I interpreted the requested Go microservice as a stateless HTTP REST API using JSON for communication with the frontend. This keeps it independently deployable and gives the frontend a simple, explicit contract to consume.
 - **Real numbers only:** the service works in the real-number domain and does not model complex results. Operations whose true answer is not a real number are rejected as `OPERAND_OUT_OF_DOMAIN` rather than approximated: the square root of a negative operand, and a negative base raised to a fractional exponent.
 - **One calculation per request:** no batching, and no expression parsing, the service does not accept `"2 + 3 * 4"`. A client composes multi-step work from successive requests.
 - **No authentication, rate limiting, or persistence:** none were required, and none are needed for correctness at this scope.

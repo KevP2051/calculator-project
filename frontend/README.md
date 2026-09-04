@@ -2,7 +2,7 @@
 
 This is the web app for the calculator project, built with React, TypeScript, and Vite.
 
-You type two numbers, pick an operation, and it calls the backend API and shows the result. The backend lives in [`../backend`](../backend/README.md).
+You type two numbers, pick an operation, and it calls the API and shows the result. The Go microservice it talks to lives in [`../backend`](../backend/README.md).
 
 For a complete full-stack guide, including the API reference and Docker setup, see the [project README](../README.md).
 
@@ -19,7 +19,7 @@ If the repository is already cloned, open a terminal in its root and run `cd fro
 
 ## Prerequisites
 
-**Node 22.12 or later.** Vite runs on Node 20, but Vitest needs 22.12, so on Node 20 the app works and the tests do not start.
+**Node 22.12 or later.** Vite runs on Node 20.19, but Vitest needs 22.12, so on Node 20.19 the app works and the tests do not start.
 
 ```bash
 node --version
@@ -27,7 +27,7 @@ node --version
 
 ## Run the app locally
 
-### 1. Start the backend
+### 1. Start the microservice
 
 The frontend requires the API. In a separate terminal, from the repository root, run:
 
@@ -61,7 +61,7 @@ npm run dev
 
 Open `http://localhost:5173` in a browser.
 
-The backend has to be running too, otherwise every calculation shows a "Cannot reach the server" message. See [`backend/README.md`](../backend/README.md).
+The microservice has to be running too, otherwise every calculation shows a "Cannot reach the server" message. See [`backend/README.md`](../backend/README.md).
 
 ### Configuration
 
@@ -69,13 +69,13 @@ One variable, in `.env`:
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `VITE_API_URL` | `http://localhost:8080/api/v1` | Where the backend is |
+| `VITE_API_URL` | `http://localhost:8080/api/v1` | Where the microservice is |
 
-Vite reads it when it builds, not when the page runs, so a production build has the URL baked into it. Changing the backend URL means building again.
+Vite reads it when it builds, not when the page runs, so a production build has the URL baked into it. Changing that URL means building again.
 
 ## Run with Docker
 
-Docker starts this frontend and the Go backend together. From the repository root (the directory containing `docker-compose.yml`), run:
+Docker starts this frontend and the Go microservice together. From the repository root (the directory containing `docker-compose.yml`), run:
 
 ```bash
 docker compose up --build
@@ -131,7 +131,7 @@ There are three test files:
 | File | What it covers |
 |---|---|
 | `schemas/calculation.schema.test.ts` | which inputs the form accepts and which it rejects |
-| `pages/CalculatorPage.test.tsx` | rendering, typing, switching operation, the request it sends, validation errors, and the four error cases |
+| `pages/CalculatorPage.test.tsx` | rendering, typing, switching operation, the request it sends, validation errors, and the five microservice-failure cases |
 | `utils/format-result.test.ts` | how results are formatted for display |
 
 `api/calculator.api.ts` is at 0% because it is three lines that create the axios instance, and it is the module the tests replace with a mock.
@@ -170,7 +170,7 @@ Inside the feature the folders are named after the role each file plays: `pages`
 
 There is one page and one request. The page holds the form, `useCalculate` handles the request, `calculateAction` builds the payload, and the axios instance sends it.
 
-When the backend returns an error it sends a code, like `DIVISION_BY_ZERO`, along with a message. The frontend only reads the code and looks up its own text for it. The backend's message is for logs, so wording stays a frontend decision.
+When the microservice returns an error it sends a code, like `DIVISION_BY_ZERO`, along with a message. The frontend only reads the code and looks up its own text for it. Its message is for logs, so wording stays a frontend decision.
 
 The list of operations lives in one place, `constants/operations.ts`. It holds the value, symbol, label and how many numbers each operation takes. The dropdown, the number of inputs shown, and the schema all read from it.
 
@@ -190,20 +190,28 @@ The list of operations lives in one place, `constants/operations.ts`. It holds t
 
 ### Number formatting
 
-The backend returns results exactly as computed, so `0.1 + 0.2` comes back as `0.30000000000000004`. Formatting them is the frontend's job.
+The microservice returns results exactly as computed, so `0.1 + 0.2` comes back as `0.30000000000000004`. Formatting them is the frontend's job.
 
 `formatResult` rounds to 15 significant digits, which hides that noise without changing numbers that are already exact. Very large or very small results switch to scientific notation, because writing `1e305` in full would be 306 digits.
 
 ### Testing
 
-The tests only mock the axios instance. The form, the schema, the hook and the error handling all run for real, so the tests follow the same path the app does.
+The tests mock the axios instance and the toast library, nothing else. The form, the schema, the hook and the error handling all run for real, so the tests follow the same path the app does.
 
 They check what the user would see, not CSS classes, so the styling can change without breaking them.
+
+### Docker image
+
+The image is built in two stages. Node installs the dependencies and runs `npm run build`, then only `dist/` is copied into an Nginx image and the whole Node stage is discarded.
+
+Nginx is there because `npm run dev` and `npm run preview` are development tools, not production servers. What `npm run build` produces is plain HTML, CSS and JavaScript, so nothing has to run the app, something just has to hand those files to the browser. Nginx does that, and the image that ships carries no Node, no `node_modules` and no source.
+
+Nginx only serves files. It does not proxy `/api` through to the microservice, so the browser calls `http://localhost:8080` directly, exactly as it does when running locally with `npm run dev`. That keeps one request path instead of two, and it is why `VITE_API_URL` is baked in at build time and the microservice sets a CORS origin.
 
 ## Assumptions
 
 - The calculator accepts up to two numbers, since none of the supported operations requires more inputs, so the form never displays a third input.
 - All user-facing text is hardcoded in English; internationalization is not implemented.
 - There is no calculation history. Each new calculation replaces the previous result, and calculations are not persisted.
-- If a calculation fails, the previous successful result remains visible alongside the error notification because TanStack Query retains the last successful value. Clearing the result on error would be a product decision and is outside the scope of this implementation.
+- If a calculation fails, the result box returns to its `--` placeholder and the error is shown as a toast, because TanStack Query clears the mutation data when a new one starts. Keeping the previous result visible next to the error would be a product decision and is outside the scope of this implementation.
 - Request cancellation is not implemented, so submitting multiple calculations in quick succession may send multiple requests. This is acceptable for the expected usage and scope of the application.
