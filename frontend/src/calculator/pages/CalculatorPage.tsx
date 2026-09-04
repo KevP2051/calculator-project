@@ -61,7 +61,7 @@ const CalculatorPage = () => {
             <div className="w-full max-w-sm rounded-4xl border border-border/60 bg-card p-8 shadow-xl shadow-foreground/5 ring-1 ring-foreground/5">
 
                 <header className="mb-7 text-center">
-                    <h1 className="text-lg font-semibold tracking-tight text-foreground">Calculator</h1>
+                    <h1 className="text-lg font-semibold tracking-tight text-foreground">MySimpleCalc</h1>
                     <p className="mt-1 text-sm text-muted-foreground">Enter two numbers and pick an operation.</p>
                 </header>
 
