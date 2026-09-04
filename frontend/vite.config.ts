@@ -1,7 +1,7 @@
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vitest/config'
 import tailwindcss from '@tailwindcss/vite'
-import path from 'path/win32'
+import path from 'node:path'
 
 
 export default defineConfig({

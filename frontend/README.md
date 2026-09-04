@@ -1,75 +1,155 @@
-# React + TypeScript + Vite
+# Calculator Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is the web app for the calculator project, built with React, TypeScript, and Vite.
 
-Currently, two official plugins are available:
+You type two numbers, pick an operation, and it calls the backend API and shows the result. The backend lives in [`../backend`](../backend/README.md).
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Prerequisites
 
-## React Compiler
+**Node 22.12 or later.** Vite runs on Node 20, but Vitest needs 22.12, so on Node 20 the app works and the tests do not start.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```bash
+node --version
 ```
 
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
+## Run the app
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```bash
+npm install
+cp .env.example .env
+npm run dev
 ```
+
+Opens on `http://localhost:5173`.
+
+The backend has to be running too, otherwise every calculation shows a "Cannot reach the server" message. See [`backend/README.md`](../backend/README.md).
+
+### Configuration
+
+One variable, in `.env`:
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `VITE_API_URL` | `http://localhost:8080/api/v1` | Where the backend is |
+
+Vite reads it when it builds, not when the page runs, so a production build has the URL baked into it. Changing the backend URL means building again.
+
+## Scripts
+
+| Script | What it does |
+|---|---|
+| `npm run dev` | Dev server with hot reload |
+| `npm run build` | Type-checks and builds to `dist/` |
+| `npm run preview` | Serves the built app |
+| `npm run lint` | ESLint |
+| `npm test` | Runs the tests once |
+| `npm run test:watch` | Re-runs tests while you edit |
+| `npm run test:coverage` | Tests plus a coverage report |
+
+## Run the tests
+
+```bash
+npm test
+```
+
+Coverage report:
+
+```bash
+npm run test:coverage
+```
+
+Prints a table and writes `coverage/index.html`.
+
+| File | Statements | Branches |
+|---|---|---|
+| **All files** | **96.55%** | **96.55%** |
+| `actions/calculate.action.ts` | 100% | 100% |
+| `api/calculator.api.ts` | 0% | 100% |
+| `constants/error-messages.ts` | 100% | 100% |
+| `constants/operations.ts` | 100% | 100% |
+| `hooks/useCalculate.tsx` | 100% | 100% |
+| `pages/CalculatorPage.tsx` | 100% | 94.44% |
+| `schemas/calculation.schema.ts` | 100% | 100% |
+| `utils/format-result.ts` | 100% | 100% |
+
+There are three test files:
+
+| File | What it covers |
+|---|---|
+| `schemas/calculation.schema.test.ts` | which inputs the form accepts and which it rejects |
+| `pages/CalculatorPage.test.tsx` | rendering, typing, switching operation, the request it sends, validation errors, and the four error cases |
+| `utils/format-result.test.ts` | how results are formatted for display |
+
+`api/calculator.api.ts` is at 0% because it is three lines that create the axios instance, and it is the module the tests replace with a mock.
+
+## Project structure
+
+```text
+src/
+├── main.tsx                 mounts the app
+├── CalculatorApp.tsx        providers
+├── calculator/
+│   ├── api/                 axios instance
+│   ├── actions/             the request function
+│   ├── hooks/               useCalculate
+│   ├── pages/               CalculatorPage
+│   ├── schemas/             zod schema for the form
+│   ├── constants/           operations list, error messages
+│   ├── types/               request and response types
+│   └── utils/               result formatting
+├── components/ui/           shadcn components
+├── lib/                     shadcn helper
+└── test/                    test setup
+```
+
+The code is organized **by feature**. Everything the calculator needs lives in `src/calculator/`, so the whole feature can be read, moved or removed in one place. What is shared across features, like the shadcn components in `components/ui/`, stays outside it.
+
+Inside the feature the folders are named after the role each file plays: the page renders the form, the hook handles the request, the action builds it, and the api sends it. Imports only go one way, from `pages` down to `api`.
+
+## Design decisions
+
+### Architecture
+
+The code is grouped **by feature**, not by file type. The alternative is a top-level `hooks/`, `components/` and `utils/` with files from every feature mixed together. That works at this size, but once there are a few features, finding everything that belongs to one means opening several folders. Keeping the calculator in `src/calculator/` means the whole feature is one folder. What is genuinely shared, like the shadcn components in `components/ui/`, stays outside it.
+
+Inside the feature the folders are named after the role each file plays: `pages` renders, `hooks` handles the request, `actions` builds it, `api` sends it. Imports go one way, from `pages` down to `api`. That is also what made the tests simple to write, since replacing `api` with a mock leaves everything above it running normally.
+
+There is one page and one request. The page holds the form, `useCalculate` handles the request, `calculateAction` builds the payload, and the axios instance sends it.
+
+When the backend returns an error it sends a code, like `DIVISION_BY_ZERO`, along with a message. The frontend only reads the code and looks up its own text for it. The backend's message is for logs, so wording stays a frontend decision.
+
+The list of operations lives in one place, `constants/operations.ts`. It holds the value, symbol, label and how many numbers each operation takes. The dropdown, the number of inputs shown, and the schema all read from it.
+
+### Dependencies
+
+- **Tailwind CSS + shadcn/ui:** Tailwind CSS provides utility-based styling and responsive layouts, while shadcn/ui provides accessible and reusable UI primitives that are easy to customize without introducing a heavy component library.
+
+- **React Hook Form:** React Hook Form manages form state and submission efficiently, with minimal re-renders and straightforward integration with controlled and uncontrolled form components.
+
+- **Zod:** Zod provides declarative and centralized schema validation for form inputs. It also integrates with React Hook Form and TypeScript, allowing the validation schema to serve as a single source of truth for the expected form data.
+
+- **TanStack Query:** TanStack Query manages the asynchronous calculation request and its loading, success, and error states. While local React state could be sufficient for this small application, TanStack Query provides a consistent abstraction for server interactions and keeps API state management separate from the UI.
+
+- **Axios:** Axios was chosen as the HTTP client to centralize API configuration and provide a consistent interface for requests and error handling.
+
+- **Sonner:** Sonner shows errors as toasts, so they appear and go away instead of sitting in the page.
+
+### Number formatting
+
+The backend returns results exactly as computed, so `0.1 + 0.2` comes back as `0.30000000000000004`. Formatting them is the frontend's job.
+
+`formatResult` rounds to 15 significant digits, which hides that noise without changing numbers that are already exact. Very large or very small results switch to scientific notation, because writing `1e305` in full would be 306 digits.
+
+### Testing
+
+The tests only mock the axios instance. The form, the schema, the hook and the error handling all run for real, so the tests follow the same path the app does.
+
+They check what the user would see, not CSS classes, so the styling can change without breaking them.
+
+## Assumptions
+
+- The calculator accepts up to two numbers, since none of the supported operations requires more inputs, so the form never displays a third input.
+- All user-facing text is hardcoded in English; internationalization is not implemented.
+- There is no calculation history. Each new calculation replaces the previous result, and calculations are not persisted.
+- If a calculation fails, the previous successful result remains visible alongside the error notification because TanStack Query retains the last successful value. Clearing the result on error would be a product decision and is outside the scope of this implementation.
+- Request cancellation is not implemented, so submitting multiple calculations in quick succession may send multiple requests. This is acceptable for the expected usage and scope of the application.
