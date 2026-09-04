@@ -1,0 +1,7 @@
+# Build artifacts
+/server
+/server.exe
+
+# Test coverage reports
+/coverage.out
+/coverage.html

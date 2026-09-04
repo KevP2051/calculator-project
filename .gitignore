@@ -1,5 +1,1 @@
 .claude
-
-# Go build artifacts
-backend/server
-backend/server.exe

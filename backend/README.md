@@ -78,7 +78,7 @@ go test ./... -coverprofile=coverage.out
 go tool cover -html=coverage.out -o coverage.html
 ```
 
-Current coverage — `coverage.out` and `coverage.html` are committed:
+Current coverage — regenerate with the commands above; the report itself is gitignored:
 
 | Package | Coverage |
 |---|---|
