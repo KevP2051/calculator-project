@@ -1,9 +1,9 @@
 import { Field, FieldError, FieldLabel } from "@/components/ui/field"
-import { Controller, useForm } from "react-hook-form"
+import { Controller, useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { OPERATIONS } from "../constants/operations"
+import { OPERATIONS, operationArity, type Operation } from "../constants/operations"
 import { Button } from "@/components/ui/button"
 import { calculationSchema, type CalculatorFormData } from "../schemas/calculation.schema"
 import useCalculate from "../hooks/useCalculate"
@@ -26,11 +26,15 @@ const CalculatorPage = () => {
 
     const calculate = useCalculate()
 
+    const selectedOperation = useWatch({ control: calculatorForm.control, name: 'operation' })
+    const takesSecondNumber = operationArity(selectedOperation) === 2
 
-    const onSubmit = () => {
+    const onSubmit = (formData: CalculatorFormData) => {
         calculate.mutate({
-            operation: calculatorForm.getValues('operation'),
-            operands: [calculatorForm.getValues('firstNumber'), calculatorForm.getValues('secondNumber')]
+            operation: formData.operation,
+            operands: operationArity(formData.operation) === 1
+                ? [formData.firstNumber]
+                : [formData.firstNumber, formData.secondNumber]
         })
     }
 
@@ -76,7 +80,13 @@ const CalculatorPage = () => {
                                 <>
                                     <Select
                                         value={field.value}
-                                        onValueChange={field.onChange}
+                                        onValueChange={(value) => {
+                                            field.onChange(value)
+
+                                            if (value && operationArity(value as Operation) === 1) {
+                                                calculatorForm.setValue('secondNumber', 0, { shouldValidate: true })
+                                            }
+                                        }}
                                     >
                                         <SelectTrigger id="operation" className="h-12 w-full rounded-2xl text-base">
                                             <SelectValue />
@@ -105,26 +115,28 @@ const CalculatorPage = () => {
                         />
                     </Field>
 
-                    <Field>
-                        <FieldLabel htmlFor="secondNumber">
-                            Second number
-                        </FieldLabel>
+                    {takesSecondNumber && (
+                        <Field>
+                            <FieldLabel htmlFor="secondNumber">
+                                Second number
+                            </FieldLabel>
 
-                        <Input
-                            id="secondNumber"
-                            type="number"
-                            inputMode="decimal"
-                            placeholder="0"
-                            className={numberFieldClassName}
-                            {...calculatorForm.register('secondNumber', { valueAsNumber: true })}
-                        />
+                            <Input
+                                id="secondNumber"
+                                type="number"
+                                inputMode="decimal"
+                                placeholder="0"
+                                className={numberFieldClassName}
+                                {...calculatorForm.register('secondNumber', { valueAsNumber: true })}
+                            />
 
-                        {calculatorForm.formState.errors.secondNumber && (
-                            <FieldError>
-                                {calculatorForm.formState.errors.secondNumber.message}
-                            </FieldError>
-                        )}
-                    </Field>
+                            {calculatorForm.formState.errors.secondNumber && (
+                                <FieldError>
+                                    {calculatorForm.formState.errors.secondNumber.message}
+                                </FieldError>
+                            )}
+                        </Field>
+                    )}
 
                     <Button type="submit" size="lg" className="mt-1 h-12 rounded-2xl text-base font-semibold">
                         Calculate
@@ -132,7 +144,7 @@ const CalculatorPage = () => {
 
                     <div className="rounded-3xl bg-muted/50 px-5 py-4 text-center">
                         <p className="text-xs font-medium text-muted-foreground">Result</p>
-                        <p className="mt-1 text-3xl font-semibold tabular-nums tracking-tight text-foreground">-</p>
+                        <p className="mt-1 text-3xl font-semibold tabular-nums tracking-tight text-foreground">{calculate.data?.result ?? '--'}</p>
                     </div>
 
 
