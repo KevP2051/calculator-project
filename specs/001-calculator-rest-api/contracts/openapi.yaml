@@ -1,0 +1,175 @@
+openapi: 3.0.3
+
+info:
+  title: Calculator REST API
+  version: 1.0.0
+  description: >
+    Stateless arithmetic service. One calculation per request. All operands and results are
+    IEEE 754 binary64 values. Results are returned unrounded; display formatting is the
+    client's responsibility. Error codes are stable and documented in error-codes.md.
+
+servers:
+  - url: http://localhost:8080
+    description: Local development
+
+paths:
+  /api/v1/calculate:
+    post:
+      summary: Perform one calculation
+      operationId: calculate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CalculationRequest'
+            examples:
+              add:
+                summary: Addition
+                value: { operation: add, operands: [2, 3] }
+              sqrt:
+                summary: Square root (unary)
+                value: { operation: sqrt, operands: [9] }
+              percentage:
+                summary: 15 percent of 200
+                value: { operation: percentage, operands: [15, 200] }
+              noise:
+                summary: Representation noise is returned unrounded
+                value: { operation: add, operands: [0.1, 0.2] }
+      responses:
+        '200':
+          description: Calculation succeeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalculationResponse'
+              examples:
+                sum:
+                  value: { result: 5 }
+                noise:
+                  summary: 0.1 + 0.2, unrounded
+                  value: { result: 0.30000000000000004 }
+        '400':
+          description: >
+            The request itself is wrong. Codes: MALFORMED_JSON, MISSING_FIELD,
+            UNSUPPORTED_OPERATION, INVALID_OPERAND_COUNT, INVALID_OPERAND,
+            OPERAND_OUT_OF_RANGE.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                notANumber:
+                  value:
+                    error: { code: INVALID_OPERAND, message: 'operand 1 is not a number' }
+                tooLarge:
+                  value:
+                    error: { code: OPERAND_OUT_OF_RANGE, message: 'operand 0 exceeds the representable range' }
+                wrongCount:
+                  value:
+                    error: { code: INVALID_OPERAND_COUNT, message: 'sqrt takes 1 operand, got 2' }
+        '422':
+          description: >
+            The request is well-formed and understood, but the calculation has no
+            representable answer. Codes: DIVISION_BY_ZERO, OPERAND_OUT_OF_DOMAIN,
+            RESULT_OVERFLOW, RESULT_UNDERFLOW, RESULT_UNDEFINED.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                divideByZero:
+                  value:
+                    error: { code: DIVISION_BY_ZERO, message: 'cannot divide by zero' }
+                negativeSqrt:
+                  value:
+                    error: { code: OPERAND_OUT_OF_DOMAIN, message: 'square root of a negative number is not a real number' }
+                underflow:
+                  value:
+                    error: { code: RESULT_UNDERFLOW, message: 'result underflowed to zero' }
+        '405':
+          description: Wrong method for this path. Emitted by the router; no JSON body.
+
+  /healthz:
+    get:
+      summary: Liveness probe
+      operationId: health
+      responses:
+        '200':
+          description: Service is up
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status:
+                    type: string
+                    enum: [ok]
+
+components:
+  schemas:
+
+    CalculationRequest:
+      type: object
+      required: [operation, operands]
+      additionalProperties: true
+      description: Unrecognized extra properties are ignored, not rejected.
+      properties:
+        operation:
+          type: string
+          enum: [add, subtract, multiply, divide, power, sqrt, percentage]
+          description: >
+            percentage(a, b) computes (a / 100) * b, so percentage with operands [15, 200]
+            returns 30.
+        operands:
+          type: array
+          minItems: 1
+          maxItems: 2
+          description: >
+            Exactly one operand for sqrt, exactly two for every other operation. Each must be
+            a finite JSON number. NaN and infinity are rejected in any form. Order is
+            significant for subtract, divide, power and percentage.
+          items:
+            type: number
+            format: double
+
+    CalculationResponse:
+      type: object
+      required: [result]
+      properties:
+        result:
+          type: number
+          format: double
+          description: >
+            The exact computed value, finite, unrounded and unformatted. Never infinity or
+            NaN — those conditions are reported as errors instead.
+
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              description: >
+                Stable machine-readable identifier. Branch on this. See error-codes.md for
+                the full catalog.
+              enum:
+                - MALFORMED_JSON
+                - MISSING_FIELD
+                - UNSUPPORTED_OPERATION
+                - INVALID_OPERAND_COUNT
+                - INVALID_OPERAND
+                - OPERAND_OUT_OF_RANGE
+                - DIVISION_BY_ZERO
+                - OPERAND_OUT_OF_DOMAIN
+                - RESULT_OVERFLOW
+                - RESULT_UNDERFLOW
+                - RESULT_UNDEFINED
+            message:
+              type: string
+              description: Human-readable detail for developers. Not stable; do not parse.

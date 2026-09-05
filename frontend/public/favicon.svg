@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024" role="img" aria-label="MySimpleCalc">
+  <defs>
+    <linearGradient id="tile" x1="0.15" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#FAFAFB"/>
+      <stop offset="1" stop-color="#E9E9EC"/>
+    </linearGradient>
+    <linearGradient id="body" x1="0.2" y1="0" x2="0.8" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#F4F4F6"/>
+    </linearGradient>
+    <filter id="bodyLift" x="-25%" y="-25%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#9A9AA5" flood-opacity="0.35"/>
+    </filter>
+    <filter id="keyLift" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="7" stdDeviation="8" flood-color="#9A9AA5" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <rect width="1024" height="1024" rx="248" fill="url(#tile)"/>
+
+  <g filter="url(#bodyLift)">
+    <rect x="156" y="144" width="692" height="728" rx="108" fill="url(#body)"/>
+  </g>
+
+  <rect x="236" y="200" width="552" height="186" rx="52" fill="#2B2B2D"/>
+  <rect x="676" y="240" width="74" height="106" rx="37" fill="none" stroke="#FFFFFF" stroke-width="20"/>
+
+  <g filter="url(#keyLift)" fill="#F6F6F8">
+    <rect x="238" y="430" width="248" height="182" rx="54"/>
+    <rect x="538" y="430" width="252" height="182" rx="54"/>
+    <rect x="238" y="644" width="248" height="182" rx="54"/>
+  </g>
+  <g filter="url(#keyLift)">
+    <rect x="538" y="644" width="252" height="182" rx="54" fill="#2B2B2D"/>
+  </g>
+
+  <g stroke="#2B2B2D" stroke-width="34" stroke-linecap="round">
+    <path d="M302 521h120M362 461v120"/>
+    <path d="M604 521h120"/>
+    <path d="M320 693l84 84M404 693l-84 84"/>
+  </g>
+  <g stroke="#FFFFFF" stroke-width="34" stroke-linecap="round">
+    <path d="M604 735h120"/>
+  </g>
+  <g fill="#FFFFFF">
+    <circle cx="664" cy="691" r="16"/>
+    <circle cx="664" cy="779" r="16"/>
+  </g>
+</svg>
