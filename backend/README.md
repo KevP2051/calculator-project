@@ -90,18 +90,42 @@ docker compose down
 
 ## Run the tests
 
+Unit tests are colocated with the packages they verify:
+
+| Package | Test location | Focus |
+|---|---|---|
+| `internal/api` | `internal/api/*_test.go` | Routing, JSON handling, CORS, and HTTP status mapping |
+| `internal/service` | `internal/service/*_test.go` | Request validation, error classification, and orchestration |
+| `internal/calc` | `internal/calc/*_test.go` | Operation registry, arithmetic, and numerical guards |
+
+Run all backend unit tests and print package coverage:
+
 ```bash
 go test ./... -cover
 ```
 
-Coverage report:
+Generate or refresh the committed HTML coverage report:
 
 ```bash
 go test ./... -coverprofile=coverage.out
 go tool cover -html=coverage.out -o coverage.html
 ```
 
-The generated report is committed at [`coverage.html`](coverage.html), with the raw profile at [`coverage.out`](coverage.out); the commands above overwrite both in place. Current coverage:
+The generated report is committed at [`coverage.html`](coverage.html), with the raw profile at [`coverage.out`](coverage.out); the commands above overwrite both in place. Open the per-line report with the command for your operating system:
+
+```powershell
+Start-Process coverage.html
+```
+
+```bash
+# macOS
+open coverage.html
+
+# Linux
+xdg-open coverage.html
+```
+
+Current coverage:
 
 | Package | Coverage |
 |---|---|
@@ -340,7 +364,11 @@ Detailed reasoning for the numerical decisions is documented in [`research.md`](
 
 - **No third-party dependencies:** Go's standard library provides the routing, JSON handling, and testing needed for this scope, and CORS is implemented as small middleware on top of `net/http`. This keeps the dependency surface small.
 
+- **The test toolchain is the standard library:** `testing` provides the runner and the table structure, `net/http/httptest` drives the real `http.Handler` — router, CORS middleware and JSON encoding included — through `NewRequest` and `NewRecorder` without binding a socket, and `encoding/json` asserts on the wire format rather than on Go structs. No assertion or mocking library was added, so `go.mod` still has no `require` block: a reviewer clones the repository and runs `go test ./...` with nothing to install, and a failure prints an ordinary Go message instead of a third-party matcher's output.
+
 - **Table-driven tests:** tests are organized around the defined behavior and edge cases, keeping the mapping between requirements and verification straightforward.
+
+- **Coverage comes from the toolchain too:** `go test -cover` measures it and `go tool cover -html` renders it, both shipped with Go. There is no coverage service, no extra dependency, and no build step to instrument the code.
 
 - **Focused coverage:** the arithmetic and validation layers receive the most coverage because they contain the core calculation and input-handling risks. Current coverage is `100%` for `internal/calc`, `97.7%` for `internal/api`, and `94.3%` for `internal/service`.
 

@@ -147,3 +147,30 @@ Review the constitution and tasks.md before implementing.
 
 ## Prompt 008 - Project implementation
 Do all of these tests directly correspond to requirements in the specification/tasks, or were any of them added solely to increase test coverage?
+
+## Prompt 009 - Frontend Formatter
+Create a simple number formatter for the calculator result. It should display numbers using up to 15 significant digits. Use normal decimal notation for values between 1e-6 and 1e15, and scientific notation for values outside that range. Handle negative numbers and zero correctly. Use Intl.NumberFormat and keep the implementation simple and readable.
+
+## Prompt 010 - Frontend tests
+Add frontend tests for the calculator with the following functionality:
+
+1. Calculation schema
+   - Valid numbers and supported operations are accepted.
+   - Invalid inputs are rejected.
+   - Negative numbers are handled correctly.
+   - Only the supported operations are accepted.
+
+2. Calculator form/page
+   - The calculator renders the two number inputs and operation selector.
+   - The user can enter both operands.
+   - The user can change the selected operation.
+   - Submitting the form sends the expected payload to the calculation mutation.
+   - Validation errors are displayed for invalid input.
+   - The result returned by the mutation is displayed.
+   - Mutation errors are handled and shown appropriately.
+
+3. API/mutation logic
+   - Add separate tests only where there is meaningful logic to test independently.
+   - Mock HTTP requests rather than making real network calls.
+
+You can suggest additional tests if you find any important behavior that is currently not covered. For the test structure, follow the same approach used in the calculator microservice, colocate tests next to the source files they cover.

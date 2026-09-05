@@ -101,18 +101,32 @@ docker compose down
 
 ## Run the tests
 
+Frontend unit tests are located in `src/calculator/`, next to the calculator behavior they verify. Install the locked dependencies and run the complete suite with:
+
 ```bash
 npm ci
 npm test
 ```
 
-Coverage report:
+Generate or refresh the coverage report with:
 
 ```bash
 npm run test:coverage
 ```
 
-Prints a table and writes `coverage/index.html`. That report is committed, along with [`coverage/lcov.info`](coverage/lcov.info) for tooling, and rerunning the command overwrites both in place.
+Prints a table and writes [`coverage/index.html`](coverage/index.html). That report is committed, along with [`coverage/lcov.info`](coverage/lcov.info) for tooling, and rerunning the command overwrites both in place. Open the HTML report with the command for your operating system:
+
+```powershell
+Start-Process coverage/index.html
+```
+
+```bash
+# macOS
+open coverage/index.html
+
+# Linux
+xdg-open coverage/index.html
+```
 
 | File | Statements | Branches |
 |---|---|---|
@@ -199,6 +213,18 @@ The microservice returns results exactly as computed, so `0.1 + 0.2` comes back 
 The tests mock the axios instance and the toast library, nothing else. The form, the schema, the hook and the error handling all run for real, so the tests follow the same path the app does.
 
 They check what the user would see, not CSS classes, so the styling can change without breaking them.
+
+The tools behind that:
+
+- **Vitest:** the runner reads the same `vite.config.ts` the app builds with, so the `@/` alias, the TypeScript setup and the plugins behave in a test exactly as they do in the app. A separate runner would mean a second build configuration to keep in sync with the first.
+
+- **jsdom:** supplies the DOM the components render into, so the suite runs in Node without launching a browser.
+
+- **Testing Library:** `@testing-library/react` queries the page the way a person finds things, by label and by role, which is what keeps the assertions off CSS classes. `@testing-library/user-event` types and clicks like a real user instead of dispatching synthetic events, so React Hook Form's own change handling runs during the test. `@testing-library/jest-dom` adds the matchers, `toBeInTheDocument` and the rest.
+
+- **@vitest/coverage-v8:** coverage is collected through V8, so nothing instruments the source at build time. It writes the report in the standard istanbul format, which is why `coverage/index.html` is navigable and `coverage/lcov.info` is readable by ordinary tooling.
+
+- **`vi.mock` rather than a mock server:** the axios instance is one module with one export, so replacing it is a single line. Intercepting requests at the network layer would add machinery for the one request this app makes.
 
 ### Docker image
 
