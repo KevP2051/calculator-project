@@ -47,6 +47,16 @@ const backendIsUnreachable = () => {
     postMock.mockRejectedValue(new AxiosError('Network Error', 'ERR_NETWORK', AXIOS_CONFIG, {}))
 }
 
+const backendHangs = () => {
+    let release: (result: number) => void = () => {}
+
+    postMock.mockReturnValue(new Promise((resolve) => {
+        release = (result) => resolve({ data: { result } })
+    }))
+
+    return (result: number) => release(result)
+}
+
 const renderCalculatorPage = () => {
     const queryClient = new QueryClient({
         defaultOptions: { mutations: { retry: false } },
@@ -154,6 +164,23 @@ describe('CalculatorPage', () => {
                 operation: 'sqrt',
                 operands: [25],
             }))
+        })
+
+        it('blocks a second submission while the first one is still in flight', async () => {
+            const finishRequest = backendHangs()
+            const user = renderCalculatorPage()
+
+            await user.type(firstNumberInput(), '6')
+            await user.type(secondNumberInput(), '7')
+            await user.click(calculateButton())
+
+            expect(await screen.findByRole('button', { name: 'Calculating…' })).toBeDisabled()
+            expect(postMock).toHaveBeenCalledTimes(1)
+
+            finishRequest(42)
+
+            await screen.findByText('42')
+            expect(calculateButton()).toBeEnabled()
         })
 
         it('displays the result returned by the backend', async () => {

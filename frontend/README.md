@@ -130,13 +130,13 @@ xdg-open coverage/index.html
 
 | File | Statements | Branches |
 |---|---|---|
-| **All files** | **96.55%** | **96.55%** |
+| **All files** | **96.55%** | **96.77%** |
 | `actions/calculate.action.ts` | 100% | 100% |
 | `api/calculator.api.ts` | 0% | 100% |
 | `constants/error-messages.ts` | 100% | 100% |
 | `constants/operations.ts` | 100% | 100% |
 | `hooks/useCalculate.tsx` | 100% | 100% |
-| `pages/CalculatorPage.tsx` | 100% | 94.44% |
+| `pages/CalculatorPage.tsx` | 100% | 95% |
 | `schemas/calculation.schema.ts` | 100% | 100% |
 | `utils/format-result.ts` | 100% | 100% |
 
@@ -240,4 +240,4 @@ Nginx only serves files. It does not proxy `/api` through to the microservice, s
 - All user-facing text is hardcoded in English; internationalization is not implemented.
 - There is no calculation history. Each new calculation replaces the previous result, and calculations are not persisted.
 - If a calculation fails, the result box returns to its `--` placeholder and the error is shown as a toast, because TanStack Query clears the mutation data when a new one starts. Keeping the previous result visible next to the error would be a product decision and is outside the scope of this implementation.
-- Request cancellation is not implemented, so submitting multiple calculations in quick succession may send multiple requests. This is acceptable for the expected usage and scope of the application.
+- While a calculation is in flight the submit button is disabled and reads `Calculating…`, so clicking again cannot start a second request. The request already in progress is not aborted; it is left to finish, which is enough when only one calculation can be in flight at a time.

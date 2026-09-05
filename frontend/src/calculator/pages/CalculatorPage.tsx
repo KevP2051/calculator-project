@@ -157,8 +157,13 @@ const CalculatorPage = () => {
                         </Field>
                     )}
 
-                    <Button type="submit" size="lg" className="mt-1 h-12 rounded-2xl text-base font-semibold">
-                        Calculate
+                    <Button
+                        type="submit"
+                        size="lg"
+                        disabled={calculate.isPending}
+                        className="mt-1 h-12 rounded-2xl text-base font-semibold"
+                    >
+                        {calculate.isPending ? 'Calculating…' : 'Calculate'}
                     </Button>
 
                     <div className="rounded-3xl bg-muted/50 px-5 py-4 text-center">
